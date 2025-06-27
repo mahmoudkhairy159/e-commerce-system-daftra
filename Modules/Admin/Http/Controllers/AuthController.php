@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Hash;
 use Modules\Admin\Http\Requests\Auth\AdminLoginRequest;
 use Modules\Admin\Http\Requests\Auth\AuthUpdateAdminRequest;
 use Modules\Admin\Http\Requests\Auth\AuthUpdatePasswordRequest;
+use Modules\Admin\Models\Admin;
 use Modules\Admin\Repositories\AdminRepository;
 use Modules\Admin\Transformers\Admin\AdminResource;
 
@@ -33,20 +34,12 @@ class AuthController extends Controller
 
     public function __construct(AdminRepository $adminRepository)
     {
-
         $this->guard = 'admin-api';
-
-        request()->merge(['token' => 'true']);
-
-        Auth::setDefaultDriver($this->guard);
-
-
         $this->_config = request('_config');
-
+        Auth::setDefaultDriver($this->guard);
         $this->adminRepository = $adminRepository;
 
         $this->middleware('auth:' . $this->guard)->except('create');
-
     }
 
 
@@ -57,49 +50,85 @@ class AuthController extends Controller
     public function create(AdminLoginRequest $request)
     {
         try {
-            $request->validated();
+            $admin = Admin::where('email', $request->email)->first();
 
-            if (!$jwtToken = auth()->guard($this->guard)->attempt($request->only(['email', 'password']))) {
+            // Check if admin exists and password is correct
+            if (!$admin || !Hash::check($request->password, $admin->password)) {
                 return $this->errorResponse(
                     [],
-                    "Invalid email or Password",
+                    __('admin::app.auth.login.invalid_email_or_password'),
                     401
                 );
             }
 
-            $admin = auth($this->guard)->user();
+            // Check admin status
             if (!$admin->status || $admin->blocked) {
-                $message = $admin->blocked ? "Your Account Has Been Blocked" : "Your Account Is Inactive";
-                auth()->guard($this->guard)->logout();
+                $message = $admin->blocked ? __('admin::app.auth.login.your_account_is_blocked') : __('admin::app.auth.login.your_account_is_inactive');
                 return $this->errorResponse(
                     [],
                     $message,
                     400
                 );
-            } else
+            }
 
-                $data = [
-                    'admin' => new AdminResource($admin),
-                    'token' => $jwtToken,
-                    'expires_in_minutes' => Auth::factory()->getTTL()
-                ];
+            // Create Sanctum token
+            $tokenName = 'admin-api-token';
+            $token = $admin->createToken($tokenName)->plainTextToken;
+
+            $data = [
+                'admin' => new AdminResource($admin),
+                'token' => $token,
+                'token_type' => 'Bearer',
+            ];
 
             return $this->successResponse(
                 $data,
-                "Logged in successfully.",
+                __('admin::app.auth.login.logged_in_successfully'),
                 201
             );
         } catch (Exception $e) {
-            dd($e->getMessage());
             return $this->errorResponse(
-                [],
-                __('app.something-went-wrong'),
+                [$e->getMessage()],
+                __('admin::app.something-went-wrong'),
                 500
             );
         }
     }
 
+    /**
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function refresh()
+    {
+        try {
+            $admin = auth($this->guard)->user();
 
+            // Revoke current tokens
+            $admin->tokens()->delete();
+
+            // Create new token
+            $tokenName = 'admin-api-token';
+            $token = $admin->createToken($tokenName)->plainTextToken;
+
+            $data = [
+                'admin' => new AdminResource($admin),
+                'token' => $token,
+                'token_type' => 'Bearer',
+            ];
+
+            return $this->successResponse(
+                $data,
+                __('admin::app.auth.token_refreshed_successfully'),
+                200
+            );
+        } catch (Exception $e) {
+            return $this->errorResponse(
+                [$e->getMessage()],
+                __('admin::app.something-went-wrong'),
+                500
+            );
+        }
+    }
 
     public function get()
     {
@@ -178,45 +207,20 @@ class AuthController extends Controller
     public function destroy()
     {
         try {
-            auth()->guard($this->guard)->logout();
+            $admin = auth($this->guard)->user();
+
+            // Revoke all tokens for the admin
+            $admin->tokens()->delete();
+
             return $this->messageResponse(
-                "Logged out successfully.",
+                __('admin::app.auth.logout.logout_successfully'),
                 true,
                 200
             );
         } catch (Exception $e) {
             return $this->errorResponse(
-                [],
-                __('app.something-went-wrong'),
-                500
-            );
-        }
-    }
-
-
-
-    /**
-     * Refresh a token.
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function refresh()
-    {
-        try {
-
-            $data = [
-                'access_token' => Auth::guard($this->guard)->refresh(),
-                'expires_in_minutes' => Auth::factory()->getTTL(),
-            ];
-            return $this->successResponse(
-                $data,
-                "",
-                201
-            );
-        } catch (Exception $e) {
-            return $this->errorResponse(
-                [],
-                __('app.something-went-wrong'),
+                [$e->getMessage()],
+                __('admin::app.something-went-wrong'),
                 500
             );
         }

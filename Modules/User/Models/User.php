@@ -11,30 +11,22 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Hash;
+use Laravel\Sanctum\HasApiTokens;
 use Modules\Cart\Models\Cart;
 use Modules\Order\Models\Order;
 use Modules\Order\Models\OrderStatusHistory;
 use Modules\User\Filters\UserFilter;
 use Modules\Wishlist\Models\Wishlist;
-use Tymon\JWTAuth\Contracts\JWTSubject;
 
-class User extends Authenticatable implements JWTSubject, MustVerifyEmail
+class User extends Authenticatable implements MustVerifyEmail
 {
     use HasFactory;
     use Notifiable;
     use Filterable;
     use UploadFileTrait;
     use Sluggable;
+    use HasApiTokens;
 
-    public function getJWTIdentifier()
-    {
-        return $this->getKey();
-    }
-
-    public function getJWTCustomClaims()
-    {
-        return [];
-    }
     protected $table = 'users';
     /**
      * The attributes that are mass assignable.
@@ -140,7 +132,7 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
     {
         return $this->hasMany(Order::class);
     }
-      /**
+    /**
      * Get all of the order status changes by this user.
      */
     public function orderStatusChanges()

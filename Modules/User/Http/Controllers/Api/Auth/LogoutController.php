@@ -20,8 +20,8 @@ class LogoutController extends Controller
     public function __construct(UserRepository $userRepository)
     {
         $this->guard = 'user-api';
-        Auth::setDefaultDriver($this->guard);
         $this->_config = request('_config');
+        Auth::setDefaultDriver($this->guard);
         $this->userRepository = $userRepository;
         $this->middleware('auth:' . $this->guard)->only(['refresh', 'logout']);
     }
@@ -29,21 +29,20 @@ class LogoutController extends Controller
     public function logout()
     {
         try {
-            auth()->guard($this->guard)->logout();
+            $user = auth($this->guard)->user();
+
+            // Revoke all tokens for the user
+            $user->tokens()->delete();
+
             return $this->messageResponse(
                 __('app.auth.logout.logout_successfully'),
                 true,
                 200
             );
         } catch (Exception $e) {
-            // return $this->errorResponse(
-            //     [],
-            //     __('app.something-went-wrong'),
-            //     500
-            // );
             return $this->errorResponse(
-                [],
-                $e->getMessage(),
+                [$e->getMessage()],
+                __('app.something-went-wrong'),
                 500
             );
         }

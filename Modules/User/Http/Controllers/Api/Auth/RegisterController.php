@@ -13,7 +13,6 @@ use Modules\User\Repositories\UserProfileRepository;
 use Modules\User\Repositories\UserRepository;
 use Modules\User\Traits\UserOtpTrait;
 use Modules\User\Transformers\Api\User\UserResource;
-use Tymon\JWTAuth\Facades\JWTAuth;
 
 class RegisterController extends Controller
 {
@@ -30,8 +29,8 @@ class RegisterController extends Controller
     public function __construct(UserRepository $userRepository, UserProfileRepository $userProfileRepository, UserOTPRepository $otpRepository)
     {
         $this->guard = 'user-api';
-        Auth::setDefaultDriver($this->guard);
         $this->_config = request('_config');
+        Auth::setDefaultDriver($this->guard);
         $this->userRepository = $userRepository;
         $this->userProfileRepository = $userProfileRepository;
         $this->otpRepository = $otpRepository;
@@ -54,16 +53,16 @@ class RegisterController extends Controller
             $userProfile = $this->userProfileRepository->create(['user_id' => $user->id]);
             DB::commit();
 
-            // Generate JWT token for the user
-            $jwtToken = JWTAuth::fromUser($user);
+            // Create Sanctum token
+            $tokenName = 'user-api-token';
+            $token = $user->createToken($tokenName)->plainTextToken;
 
             $this->sendOtpCode($user);
             $user->load('profile', 'userAddresses', 'defaultAddress')->withCount('orders');
-            $user = new UserResource($user);
             $data = [
                 'user' => new UserResource($user),
-                'token' => $jwtToken,
-                'expires_in_minutes' => Auth::factory()->getTTL(),
+                'token' => $token,
+                'token_type' => 'Bearer',
             ];
 
             return $this->successResponse(

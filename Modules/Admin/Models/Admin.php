@@ -4,17 +4,17 @@ namespace Modules\Admin\Models;
 
 use App\Traits\UploadFileTrait;
 use EloquentFilter\Filterable;
-use Tymon\JWTAuth\Contracts\JWTSubject;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Support\Facades\Hash;
+use Laravel\Sanctum\HasApiTokens;
 use Modules\Admin\Filters\AdminFilter;
 use Modules\Order\Models\OrderStatusHistory;
 
-class Admin extends Authenticatable implements JWTSubject
+class Admin extends Authenticatable
 {
-    use HasFactory, Notifiable, Filterable, UploadFileTrait;
+    use HasFactory, Notifiable, Filterable, UploadFileTrait, HasApiTokens;
 
 
     protected $table = 'admins';
@@ -54,32 +54,7 @@ class Admin extends Authenticatable implements JWTSubject
     const STATUS_INACTIVE = 0;
     const STATUS_ACTIVE = 1;
 
-    /********************************** JWT Authentication ***************************************/
-
-    /**
-     * Get the identifier that will be stored in the subject claim of the JWT.
-     *
-     * @return mixed
-     */
-    public function getJWTIdentifier()
-    {
-        return $this->getKey();
-    }
-
-    /**
-     * Return a key-value array, containing any custom claims to be added to the JWT.
-     *
-     * @return array
-     */
-    public function getJWTCustomClaims()
-    {
-        return [];
-    }
-
-    /********************************** End JWT Authentication ***********************************/
-
     /********************************** Filterable ***********************************************/
-
 
     public function modelFilter()
     {
@@ -104,7 +79,7 @@ class Admin extends Authenticatable implements JWTSubject
      */
     protected function getImageUrlAttribute()
     {
-        return $this->image ? $this->getFileAttribute($this->image) :null;
+        return $this->image ? $this->getFileAttribute($this->image) : null;
     }
 
     /********************************** End Image Handling **************************************/
@@ -167,7 +142,7 @@ class Admin extends Authenticatable implements JWTSubject
 
         return in_array($permission, $this->role->permissions);
     }
-  /**
+    /**
      * Get all of the order status changes by this user.
      */
     public function orderStatusChanges()

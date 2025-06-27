@@ -34,7 +34,7 @@ return [
     | users are actually retrieved out of your database or other storage
     | mechanisms used by this application to persist your user's data.
     |
-    | Supported: "session"
+    | Supported: "session", "sanctum"
     |
     */
 
@@ -44,14 +44,17 @@ return [
             'provider' => 'users',
         ],
         'admin-api' => [
-            'driver' => 'jwt',
+            'driver' => 'sanctum',
             'provider' => 'admins',
         ],
         'user-api' => [
-            'driver' => 'jwt',
+            'driver' => 'sanctum',
             'provider' => 'users',
         ],
-       
+        'sanctum' => [
+            'driver' => 'sanctum',
+            'provider' => null,
+        ],
     ],
 
     /*
@@ -74,7 +77,7 @@ return [
     'providers' => [
         'users' => [
             'driver' => 'eloquent',
-            'model' =>User::class,
+            'model' => User::class,
         ],
         'admins' => [
             'driver' => 'eloquent',

@@ -7,7 +7,6 @@ use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use Tymon\JWTAuth\Facades\JWTAuth;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\User as ProviderUser;
 use Modules\User\Http\Requests\Api\Auth\UserSocialLoginRequest;
@@ -32,17 +31,18 @@ class SocialiteController extends Controller
     public function __construct(UserRepository $userRepository, UserProfileRepository $userProfileRepository, UserOTPRepository $otpRepository)
     {
         $this->guard = 'user-api';
-        Auth::setDefaultDriver($this->guard);
         $this->_config = request('_config');
+        Auth::setDefaultDriver($this->guard);
+
         $this->userRepository = $userRepository;
         $this->userProfileRepository = $userProfileRepository;
+        $this->otpRepository = $otpRepository;
     }
 
     /*  Full Flow
-  The frontend calls Google’s OAuth service and retrieves the access_token.
   The frontend sends this token to your Laravel API in a request to the /login endpoint.
   The backend uses the access_token with Socialite to retrieve the user's data from Google.
-  If the user is successfully authenticated, the backend generates a JWT token and returns it to the frontend, which can store it for subsequent requests.
+  If the user is successfully authenticated, the backend generates a Sanctum token and returns it to the frontend, which can store it for subsequent requests.
   */
     //for Spa login
 
@@ -56,12 +56,15 @@ class SocialiteController extends Controller
 
             if ($providerUser) {
                 $user = $this->findOrCreate($providerUser, $provider);
-                $jwtToken = JWTAuth::fromUser($user);
+
+                // Create Sanctum token
+                $tokenName = 'user-api-token';
+                $token = $user->createToken($tokenName)->plainTextToken;
 
                 $data = [
                     'user' => new UserResource($user),
-                    'token' => $jwtToken,
-                    'expires_in_minutes' => Auth::factory()->getTTL(),
+                    'token' => $token,
+                    'token_type' => 'Bearer',
                 ];
 
                 return $this->successResponse(
@@ -193,12 +196,14 @@ class SocialiteController extends Controller
             $userProfile = $this->userProfileRepository->create(['user_id' => $user->id]);
             DB::commit();
 
-            // Generate JWT token for the user
-            $jwtToken = JWTAuth::fromUser($user);
+            // Create Sanctum token
+            $tokenName = 'user-api-token';
+            $token = $user->createToken($tokenName)->plainTextToken;
+
             $data = [
                 'user' => new UserResource($user),
-                'token' => $jwtToken,
-                'expires_in_minutes' => Auth::factory()->getTTL(),
+                'token' => $token,
+                'token_type' => 'Bearer',
             ];
 
             return $this->successResponse(
