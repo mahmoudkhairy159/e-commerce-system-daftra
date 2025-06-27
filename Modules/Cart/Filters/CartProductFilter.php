@@ -83,7 +83,7 @@ class CartProductFilter extends ModelFilter
         });
     }
 
-  
+
 
     public function latest()
     {
@@ -105,14 +105,14 @@ class CartProductFilter extends ModelFilter
     public function fromPrice($fromPrice)
     {
         return $this->whereHas('product', function ($q) use ($fromPrice) {
-            $q->where('price', '>=', $fromPrice);
+            $q->where('offer_price', '>=', $fromPrice);
         });
     }
 
     public function toPrice($toPrice)
     {
         return $this->whereHas('product', function ($q) use ($toPrice) {
-            $q->where('price', '<=', $toPrice);
+            $q->where('offer_price', '<=', $toPrice);
         });
     }
 
