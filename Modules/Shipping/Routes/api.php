@@ -1,6 +1,7 @@
 <?php
 
-
+use Illuminate\Support\Facades\Route;
+use Modules\Shipping\Http\Controllers\Api\ShippingMethodController;
 
 /*
 |--------------------------------------------------------------------------
@@ -13,3 +14,17 @@
 |
 */
 
+
+
+Route::prefix('v1')->name('user-api.')->group(function () {
+
+
+
+
+    Route::prefix('shipping-methods')->name('shipping-methods.')->controller(ShippingMethodController::class)->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('{shipping_method}', 'show')->name('show');
+    });
+
+
+});
