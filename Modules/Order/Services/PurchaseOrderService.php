@@ -16,44 +16,71 @@ class PurchaseOrderService
     protected $cartRepository;
     protected $orderProductRepository;
     protected $productRepository;
+    protected $orderValidationService;
 
     public function __construct(
         OrderRepository $orderRepository,
         CartRepository $cartRepository,
         OrderProductRepository $orderProductRepository,
-        ProductRepository $productRepository
+        ProductRepository $productRepository,
+        OrderValidationService $orderValidationService
     ) {
         $this->orderRepository = $orderRepository;
         $this->cartRepository = $cartRepository;
         $this->productRepository = $productRepository;
         $this->orderProductRepository = $orderProductRepository;
+        $this->orderValidationService = $orderValidationService;
     }
 
     public function purchaseOrder(array $data, string $transactionId = null, OrderCalculationService $orderCalculationService)
     {
         DB::beginTransaction();
         try {
-            // Calculate order amounts
+            // Step 1: Comprehensive validation before processing
+            $validationResult = $this->orderValidationService->validateOrderPlacement($data['user_id']);
+            $cart = $validationResult['cart'];
+
+            // Step 2: Validate stock with locking to prevent race conditions
+            $productQuantities = $cart->cartProducts->pluck('quantity', 'product_id')->toArray();
+            $stockValidation = $this->orderValidationService->validateStockWithLocking($productQuantities);
+            $products = $stockValidation['products'];
+
+            // Step 3: Check cart integrity (prices haven't changed)
+            $integrityCheck = $this->orderValidationService->validateCartIntegrity($cart);
+            if ($integrityCheck['has_issues']) {
+                throw new \Exception(__('validation.cart_integrity_issues') . ': ' .
+                    json_encode($integrityCheck['issues']), 422);
+            }
+
+            // Step 4: Calculate order amounts
             $data = $orderCalculationService->calculateOrderAmount($data);
 
-            // Create a new order
+            // Step 5: Create a new order
             $order = $this->orderRepository->create($data);
             $user = auth()->user();
+
             // Create initial order status history
             $this->createStatusHistory(
                 $order->id,
                 null,
-                $user, // Now passing the user model instance instead of just user_id
-                OrderStatusEnum::PENDING, // Initial order has no 'from' status
+                $user,
                 OrderStatusEnum::PENDING,
-                'Order created'
+                OrderStatusEnum::PENDING,
+                'Order created and validated'
             );
 
-            $cart = $this->cartRepository->getCartByUserId($data['user_id']);
-
-            // Move products from cart to order
+            // Step 6: Move products from cart to order with stock updates
             foreach ($cart->cartProducts as $cartProduct) {
-                $product = $this->productRepository->findOrFail($cartProduct->product_id);
+                $product = $products->get($cartProduct->product_id);
+
+                // Double-check stock availability (defensive programming)
+                if ($product->stock < $cartProduct->quantity) {
+                    throw new \Exception(__('validation.insufficient_stock_during_processing', [
+                        'product' => $cartProduct->name,
+                        'requested' => $cartProduct->quantity,
+                        'available' => $product->stock
+                    ]), 422);
+                }
 
                 $orderProduct = $this->orderProductRepository->create([
                     'order_id' => $order->id,
@@ -70,18 +97,18 @@ class PurchaseOrderService
                 $this->createStatusHistory(
                     $order->id,
                     $orderProduct->id,
-                    $user, // User model instance
-                    OrderStatusEnum::PENDING, // Initial order product has no 'from' status
+                    $user,
+                    OrderStatusEnum::PENDING,
                     OrderStatusEnum::PENDING,
                     'Order product added'
                 );
 
-                // Update product quantity
+                // Update product stock (using the locked product instance)
                 $product->stock -= $cartProduct->quantity;
                 $product->save();
             }
 
-            // Store transaction details
+            // Step 7: Store transaction details
             if ($transactionId != null) {
                 $order->transaction()->create([
                     'user_id' => $data['user_id'],
@@ -93,15 +120,15 @@ class PurchaseOrderService
                 ]);
             }
 
-            // Empty the cart
+            // Step 8: Empty the cart
             $this->cartRepository->emptyCart($cart->id);
+
             DB::commit();
 
-            return $order;
+            return $order->load('orderProducts');
         } catch (\Exception $e) {
-            dd($e->getMessage());
             DB::rollBack();
-            return false;
+            throw $e;
         }
     }
 

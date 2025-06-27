@@ -6,10 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Traits\ApiResponseTrait;
 use Exception;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Modules\Cart\Repositories\CartRepository;
 use Modules\Order\Enums\OrderPaymentMethodEnum;
 use Modules\Order\Enums\OrderPaymentStatusEnum;
 use Modules\Order\Http\Requests\Api\Order\StoreCashOrderRequest;
+use Modules\Order\Http\Requests\Api\Order\StoreOrderWithValidationRequest;
 use Modules\Order\Repositories\OrderRepository;
 use Modules\Order\Services\OrderCalculationService;
 use Modules\Order\Services\PurchaseOrderService;
@@ -63,35 +65,63 @@ class OrderController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreCashOrderRequest $request, PurchaseOrderService $purchaseOrderService, OrderCalculationService $orderCalculationService)
+    public function store(StoreOrderWithValidationRequest $request, PurchaseOrderService $purchaseOrderService, OrderCalculationService $orderCalculationService)
     {
         try {
             $data = $request->validated();
             $data['user_id'] = auth()->id();
+
+            // Basic cart existence check (detailed validation is done in the service)
             $cart = $this->cartRepository->getCartByUserId($data['user_id']);
             if (!$cart || $cart->cartProducts->isEmpty()) {
-                return $this->errorResponse([], "The cart is empty.", statusCode: 404);
-
+                return $this->errorResponse([], __('validation.cart_empty'), 422);
             }
+
             $data['payment_method'] = OrderPaymentMethodEnum::CASH;
             $data['payment_status'] = OrderPaymentStatusEnum::PENDING;
             $transactionId = null;
+
             $created = $purchaseOrderService->purchaseOrder($data, transactionId: $transactionId, orderCalculationService: $orderCalculationService);
+
             if ($created) {
-                return $this->messageResponse(
-                    __("order::app.orders.created-successfully"),
-                    true,
-                    201
-                );
-            } {
-                return $this->messageResponse(
+                return $this->successResponse([
+                    'order' => $created,
+                    'message' => __("order::app.orders.created-successfully")
+                ], __("order::app.orders.created-successfully"), 201);
+            } else {
+                return $this->errorResponse(
+                    [],
                     __("order::app.orders.created-failed"),
-                    false,
                     400
                 );
             }
         } catch (Exception $e) {
-            //    return  $this->messageResponse( $e->getMessage());
+            // Handle validation exceptions with detailed error information
+            if ($e->getCode() === 422) {
+                $errorData = [];
+
+                // Check if there are nested validation errors
+                if ($e->getPrevious() && $e->getPrevious()->getMessage()) {
+                    $nestedErrors = json_decode($e->getPrevious()->getMessage(), true);
+                    if (json_last_error() === JSON_ERROR_NONE) {
+                        $errorData['validation_details'] = $nestedErrors;
+                    }
+                }
+
+                return $this->errorResponse(
+                    $errorData,
+                    $e->getMessage(),
+                    422
+                );
+            }
+
+            // Log unexpected errors for debugging
+            Log::error('Order creation failed', [
+                'user_id' => auth()->id(),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return $this->errorResponse(
                 [],
                 __('app.something-went-wrong'),

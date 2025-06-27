@@ -188,4 +188,37 @@ return [
 
     'attributes' => [],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Order Validation Messages
+    |--------------------------------------------------------------------------
+    |
+    | Custom validation messages for order placement and product validation.
+    |
+    */
+
+    // Order validation messages
+    'cart_empty' => 'Your cart is empty. Please add items to your cart before placing an order.',
+    'order_validation_failed' => 'Order validation failed. Please check the items in your cart.',
+    'stock_validation_failed' => 'Stock validation failed for one or more products.',
+    'cart_integrity_issues' => 'Cart integrity check failed. Some product information has changed.',
+
+    // Product validation messages
+    'product_not_found' => 'Product not found or has been removed.',
+    'product_inactive' => 'This product is currently inactive and cannot be ordered.',
+    'product_not_approved' => 'This product is not approved for sale.',
+    'product_deleted' => 'This product has been removed from our catalog.',
+    'insufficient_stock' => 'Insufficient stock. Requested: :requested, Available: :available',
+    'insufficient_stock_during_processing' => 'Insufficient stock for :product. Requested: :requested, Available: :available',
+    'invalid_quantity' => 'Invalid quantity. Quantity must be greater than 0.',
+    'offer_expired' => 'The special offer for this product has expired.',
+    'price_changed' => 'Price for :product has changed from :old_price to :new_price.',
+
+    // Cart validation messages
+    'quantity_exceeded' => 'Requested quantity exceeds available stock. Available: :stock',
+
+    // Stock management messages
+    'stock_reservation_failed' => 'Failed to reserve stock for one or more products.',
+    'invalid_stock_value' => 'Stock value must be a positive number.',
+
 ];
