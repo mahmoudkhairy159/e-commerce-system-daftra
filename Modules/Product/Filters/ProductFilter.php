@@ -32,10 +32,10 @@ class ProductFilter extends ModelFilter
 
 
 
-    public function categoryId($categoryId)
+    public function categoryIds($categoryIds)
     {
-        return $this->whereHas('categories', function ($q) use ($categoryId) {
-            $q->where('categories.id', $categoryId);
+        return $this->whereHas('categories', function ($q) use ($categoryIds) {
+            $q->whereIn('categories.id', $categoryIds);
         });
     }
 
@@ -76,7 +76,7 @@ class ProductFilter extends ModelFilter
         });
     }
 
-  
+
 
     /**
      * Order by latest creation date
@@ -112,7 +112,7 @@ class ProductFilter extends ModelFilter
      */
     public function fromPrice($fromPrice)
     {
-        return $this->where('price', '>=', $fromPrice);
+        return $this->where('offer_price', '>=', $fromPrice);
     }
 
     /**
@@ -120,118 +120,14 @@ class ProductFilter extends ModelFilter
      */
     public function toPrice($toPrice)
     {
-        return $this->where('price', '<=', $toPrice);
+        return $this->where('offer_price', '<=', $toPrice);
     }
 
-    /**
-     * Filter by a single attribute value
-     */
-    public function attribute($attributeCode, $value)
-    {
-        return $this->whereHas('productAttributeValues', function ($query) use ($attributeCode, $value) {
-            $query->whereHas('attribute', function ($attrQuery) use ($attributeCode) {
-                $attrQuery->where('code', $attributeCode);
-            })
-            ->where(function ($valueQuery) use ($value) {
-                $valueQuery->whereHas('attributeValue', function ($valQuery) use ($value) {
-                    $valQuery->whereTranslation('value', $value);
-                })
-                ->orWhereTranslation('custom_value', $value);
-            });
-        });
-    }
+   
 
-    /**
-     * Filter by multiple attribute values
-     */
-    public function attributes(array $attributes)
-    {
-        return $this->where(function ($query) use ($attributes) {
-            foreach ($attributes as $attributeCode => $value) {
-                $query->whereHas('productAttributeValues', function ($attrQuery) use ($attributeCode, $value) {
-                    $attrQuery->whereHas('attribute', function ($codeQuery) use ($attributeCode) {
-                        $codeQuery->where('code', $attributeCode);
-                    })
-                    ->where(function ($valueQuery) use ($value) {
-                        $valueQuery->whereHas('attributeValue', function ($valQuery) use ($value) {
-                            $valQuery->whereTranslation('value', $value);
-                        })
-                        ->orWhereTranslation('custom_value', $value);
-                    });
-                });
-            }
-        });
-    }
 
-    /**
-     * Filter by attribute range (for numeric attributes)
-     */
-    public function attributeRange($attributeCode, $min = null, $max = null)
-    {
-        return $this->whereHas('productAttributeValues', function ($query) use ($attributeCode, $min, $max) {
-            $query->whereHas('attribute', function ($attrQuery) use ($attributeCode) {
-                $attrQuery->where('code', $attributeCode)
-                         ->where('type', 'number');
-            });
 
-            // Filter by minimum value
-            if ($min !== null) {
-                $query->where(function ($subQuery) use ($min) {
-                    $subQuery->whereHas('attributeValue', function ($valQuery) use ($min) {
-                        $valQuery->whereTranslation('value', '>=', $min);
-                    })
-                    ->orWhereTranslation('custom_value', '>=', $min);
-                });
-            }
 
-            // Filter by maximum value
-            if ($max !== null) {
-                $query->where(function ($subQuery) use ($max) {
-                    $subQuery->whereHas('attributeValue', function ($valQuery) use ($max) {
-                        $valQuery->whereTranslation('value', '<=', $max);
-                    })
-                    ->orWhereTranslation('custom_value', '<=', $max);
-                });
-            }
-        });
-    }
-
-    /**
-     * Filter by attributes with multiple values
-     */
-    public function attributeIn($attributeCode, array $values)
-    {
-        return $this->whereHas('productAttributeValues', function ($query) use ($attributeCode, $values) {
-            $query->whereHas('attribute', function ($attrQuery) use ($attributeCode) {
-                $attrQuery->where('code', $attributeCode);
-            })
-            ->where(function ($valueQuery) use ($values) {
-                $valueQuery->whereHas('attributeValue', function ($valQuery) use ($values) {
-                    $valQuery->whereTranslationIn('value', $values);
-                })
-                ->orWhereTranslationIn('custom_value', $values);
-            });
-        });
-    }
-
-    /**
-     * Filter by boolean attribute
-     */
-    public function attributeBoolean($attributeCode, $value)
-    {
-        return $this->whereHas('productAttributeValues', function ($query) use ($attributeCode, $value) {
-            $query->whereHas('attribute', function ($attrQuery) use ($attributeCode) {
-                $attrQuery->where('code', $attributeCode)
-                         ->where('type', 'boolean');
-            })
-            ->where(function ($valueQuery) use ($value) {
-                $valueQuery->whereHas('attributeValue', function ($valQuery) use ($value) {
-                    $valQuery->whereTranslation('value', $value ? 1 : 0);
-                })
-                ->orWhereTranslation('custom_value', $value ? 1 : 0);
-            });
-        });
-    }
 
     /**
      * Date range filter

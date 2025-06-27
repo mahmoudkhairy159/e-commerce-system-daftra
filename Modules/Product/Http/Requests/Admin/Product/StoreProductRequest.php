@@ -61,7 +61,7 @@ class StoreProductRequest extends FormRequest
         $rules['stock'] = ['required', 'integer', 'min:1'];
         $rules['price'] = ['required', 'numeric', 'min:0'];
         $rules['tax_rate'] = ['required', 'numeric', 'min:0','max:100'];
-        $rules['offer_price'] = ['nullable', 'numeric', 'min:0'];
+        $rules['offer_price'] = ['required', 'numeric', 'min:0'];
         $rules['offer_start_date'] = ['nullable', 'date'];
         $rules['offer_end_date'] = ['nullable', 'date', 'after_or_equal:offer_start_date'];
         $rules['approval_status'] = ['required', 'in:0,1'];
