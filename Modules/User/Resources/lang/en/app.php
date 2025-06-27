@@ -66,7 +66,7 @@ return [
 
             'your_otp_code_is' => 'Your OTP Code Is : :otp',
             'otp_code_valid_for_x_minutes' => 'This OTP Code  is valid for :minutes minutes.',
-            'otp_email_subject' => 'SLASH OTP Code',
+            'otp_email_subject' => 'Daftra OTP Code',
             'ignore_message' => 'If you did not request this code, please ignore this email. No further action is required.',
             'greeting_message' => 'Hello, ! You requested an OTP code for verification.',
             'footer_message' => 'This email was sent to you by :website for verification purposes. If you have any questions, please contact support.',

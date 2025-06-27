@@ -44,7 +44,7 @@ class SendUserResetPasswordOtpNotification extends Notification implements Shoul
                 'logoUrl' => asset(path: 'logo2.png'), // Adjust the logo path as needed
                 //'logoUrl' => storage_path(path: 'logo2.png'), // Adjust the logo path as needed
                 // 'websiteName' => config('app.name'),  // Fetches the application name from config
-                'websiteName' => 'SLASH',  // Fetches the application name from config
+                'websiteName' => 'Daftra',  // Fetches the application name from config
             ]);
     }
 
@@ -56,4 +56,3 @@ class SendUserResetPasswordOtpNotification extends Notification implements Shoul
         ];
     }
 }
-

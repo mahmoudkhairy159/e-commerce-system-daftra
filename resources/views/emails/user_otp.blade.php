@@ -1,10 +1,7 @@
 @component('mail::message')
 # {{ __('user::app.auth.otp.otp_email_subject') }}
 
-{{-- Logo Section --}}
-{{-- <div style="text-align: center; margin-bottom: 20px;">
-    <img src="{{ $logoUrl }}" alt="{{ $websiteName }}" style="max-width: 200px; margin-bottom: 15px;">
-</div> --}}
+
 
 {{-- Greeting Section --}}
 <p style="text-align: center; font-size: 18px; font-weight: bold; margin-bottom: 10px; color: #4a4a4a;">
