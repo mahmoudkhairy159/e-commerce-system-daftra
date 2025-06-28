@@ -39,20 +39,19 @@ class CountryController extends Controller
     public function index()
     {
         try {
-            $currentLocale=core()->getCurrentLocale();
-            $data = app( CacheKeysType::getCountriesCacheKeys()[$currentLocale] );
-            //$data =  $this->countryRepository->getAllActive();
-            if (!$data) {
+            $currentLocale = core()->getCurrentLocale();
+            $data = $this->countryRepository->getCachedActiveCountries($currentLocale);
+
+            if (!$data || $data->isEmpty()) {
                 return $this->messageResponse(
-                    __("app.data_not_found'"),
+                    __("app.data_not_found"),
                     false,
                     404
                 );
             }
+
             return $this->successResponse(CountryResource::collection($data));
         } catch (Exception $e) {
-            dd($e->getMessage());
-
             return $this->errorResponse(
                 [],
                 __('app.something-went-wrong'),
@@ -70,7 +69,7 @@ class CountryController extends Controller
     public function show($id)
     {
         try {
-            $data = $this->countryRepository->find($id);
+            $data = $this->countryRepository->findOrFail($id);
             return $this->successResponse(new CountryResource($data));
         } catch (Exception $e) {
             return $this->errorResponse(

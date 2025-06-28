@@ -23,7 +23,11 @@ Route::prefix('v1')->name('user-api.')->group(function () {
     Route::controller(ProductController::class)->prefix('products')->name('products.')->group(function () {
         Route::get('/slugs/{slug}', 'showBySlug')->name('showBySlug');
         Route::get('/featured', 'getFeaturedProducts')->name('getFeaturedProducts');
-
+        Route::get('/new-arrivals', 'getNewArrivals')->name('getNewArrivals');
+        Route::get('/best-sellers', 'getBestSellers')->name('getBestSellers');
+        Route::get('/top-products', 'getTopProducts')->name('getTopProducts');
+        Route::get('/category/{categoryId}', 'getByCategory')->name('getByCategory');
+        Route::get('/type/{type}', 'getByType')->name('getByType');
     });
     Route::apiResource('products', ProductController::class)->only(['index', 'show']);
     // products routes
@@ -42,8 +46,8 @@ Route::prefix('v1')->name('user-api.')->group(function () {
     });
     Route::apiResource('product-reviews', ProductReviewController::class)->except(['index']);
     // product reviews routes
-     // related-products routes
-     Route::controller(RelatedProductController::class)->prefix('related-products')->as('related-products.')->group(function () {
+    // related-products routes
+    Route::controller(RelatedProductController::class)->prefix('related-products')->as('related-products.')->group(function () {
         Route::get('/product/{id}', 'getRelatedProducts')->name('getRelatedProducts');
     });
     // related-products routes

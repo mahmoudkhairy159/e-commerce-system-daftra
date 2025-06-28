@@ -3,6 +3,7 @@
 namespace Modules\Product\Repositories;
 
 use App\Traits\SoftDeletableTrait;
+use App\Traits\CacheTrait;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Modules\Product\Enums\ProductTypeEnum;
@@ -13,24 +14,50 @@ use Prettus\Repository\Eloquent\BaseRepository;
 class ProductRepository extends BaseRepository
 {
     use SoftDeletableTrait;
+    use CacheTrait;
+
+    public $retrievedData = [
+        'id',
+        'code',
+        'image',
+        'video_url',
+        'type',
+        'created_by',
+        'updated_by',
+        'status',
+        'position',
+        'currency',
+        'stock',
+        'price',
+        'offer_price',
+        'tax_rate',
+        'offer_start_date',
+        'offer_end_date',
+        'approval_status',
+        'created_at',
+        'updated_at',
+    ];
+
     public function model()
     {
         return Product::class;
     }
+
+    /***************************************** Retrieving For Admins **************************************/
+
     public function getAll()
     {
         return $this->model
-
             ->withCount('orders', 'productReviews')
             ->withAvg('productReviews', 'rating')
             ->filter(request()->all())
             ->orderBy('created_at', 'desc');
     }
+
     public function getAllByApprovalStatus($approvalStatus)
     {
         return $this->model
             ->where('approval_status', $approvalStatus)
-
             ->withCount('orders', 'productReviews')
             ->withAvg('productReviews', 'rating')
             ->filter(request()->all())
@@ -45,7 +72,7 @@ class ProductRepository extends BaseRepository
         ];
     }
 
-
+    /***************************************** Retrieving For Users **************************************/
 
     public function getAllActive()
     {
@@ -61,9 +88,228 @@ class ProductRepository extends BaseRepository
             ->filter(request()->all())
             ->active()
             ->where('type', $type);
-
     }
 
+    /***************************************** Cached Methods **************************************/
+
+    /**
+     * Get cached all products with filter support
+     */
+    public function getCachedProducts()
+    {
+        // If filters are present, query database directly with filters
+        if (!$this->shouldUseCache()) {
+            return $this->getAllFiltered();
+        }
+
+        return app('cache.products')->getAll();
+    }
+
+    /**
+     * Get cached active products with filter support
+     */
+    public function getCachedActiveProducts(string $locale = null)
+    {
+        // If filters are present, query database directly with filters
+        if (!$this->shouldUseCache()) {
+            return $this->getAllActiveFiltered();
+        }
+
+        return app('cache.products')->getAllActive($locale);
+    }
+
+    /**
+     * Get cached products by type with filter support
+     */
+    public function getCachedProductsByType(int $type, string $locale = null)
+    {
+        // If filters are present, query database directly with filters
+        if (!$this->shouldUseCache()) {
+            return $this->getProductByTypeFiltered($type);
+        }
+
+        return app('cache.products')->getByType($type, $locale);
+    }
+
+    /**
+     * Get cached featured products with filter support
+     */
+    public function getCachedFeaturedProducts(string $locale = null)
+    {
+        // If filters are present, query database directly with filters
+        if (!$this->shouldUseCache()) {
+            return $this->getFeaturedProductsFiltered();
+        }
+
+        return app('cache.products')->getFeatured($locale);
+    }
+
+    /**
+     * Get cached new arrival products with filter support
+     */
+    public function getCachedNewArrivals(string $locale = null)
+    {
+        // If filters are present, query database directly with filters
+        if (!$this->shouldUseCache()) {
+            return $this->getNewArrivalsFiltered();
+        }
+
+        return app('cache.products')->getNewArrivals($locale);
+    }
+
+    /**
+     * Get cached best seller products with filter support
+     */
+    public function getCachedBestSellers(string $locale = null)
+    {
+        // If filters are present, query database directly with filters
+        if (!$this->shouldUseCache()) {
+            return $this->getBestSellersFiltered();
+        }
+
+        return app('cache.products')->getBestSellers($locale);
+    }
+
+    /**
+     * Get cached top products with filter support
+     */
+    public function getCachedTopProducts(string $locale = null)
+    {
+        // If filters are present, query database directly with filters
+        if (!$this->shouldUseCache()) {
+            return $this->getTopProductsFiltered();
+        }
+
+        return app('cache.products')->getTopProducts($locale);
+    }
+
+    /**
+     * Get cached products by category with filter support
+     */
+    public function getCachedProductsByCategory(int $categoryId, string $locale = null)
+    {
+        // If filters are present, query database directly with filters
+        if (!$this->shouldUseCache()) {
+            return $this->getProductsByCategoryFiltered($categoryId);
+        }
+
+        return app('cache.products')->getByCategory($categoryId, $locale);
+    }
+
+    /*****************************************Filtered Query Methods ********************************************/
+
+    /**
+     * Get all products with filters applied
+     */
+    private function getAllFiltered()
+    {
+        return $this->model
+            ->with(['categories', 'productImages'])
+            ->filter(request()->all())
+            ->orderBy('created_at', 'desc')
+            ->get();
+    }
+
+    /**
+     * Get active products with filters applied
+     */
+    private function getAllActiveFiltered()
+    {
+        return $this->model
+            ->active()
+            ->with(['categories', 'productImages'])
+            ->filter(request()->all())
+            ->orderBy('created_at', 'desc')
+            ->get();
+    }
+
+    /**
+     * Get products by type with filters applied
+     */
+    private function getProductByTypeFiltered(int $type)
+    {
+        return $this->model
+            ->active()
+            ->where('type', $type)
+            ->with(['categories', 'productImages'])
+            ->filter(request()->all())
+            ->orderBy('created_at', 'desc')
+            ->get();
+    }
+
+    /**
+     * Get featured products with filters applied
+     */
+    private function getFeaturedProductsFiltered()
+    {
+        return $this->model
+            ->active()
+            ->where('type', ProductTypeEnum::FEATURED) // 1 = FEATURED
+            ->with(['categories', 'productImages'])
+            ->filter(request()->all())
+            ->orderBy('created_at', 'desc')
+            ->get();
+    }
+
+    /**
+     * Get new arrivals with filters applied
+     */
+    private function getNewArrivalsFiltered()
+    {
+        return $this->model
+            ->active()
+            ->where('type', ProductTypeEnum::NEW_ARRIVAL) // 0 = NEW_ARRIVAL
+            ->with(['categories', 'productImages'])
+            ->filter(request()->all())
+            ->orderBy('created_at', 'desc')
+            ->get();
+    }
+
+    /**
+     * Get best sellers with filters applied
+     */
+    private function getBestSellersFiltered()
+    {
+        return $this->model
+            ->active()
+            ->where('type', ProductTypeEnum::BEST_SELLER) // 3 = BEST_SELLER
+            ->with(['categories', 'productImages'])
+            ->filter(request()->all())
+            ->orderBy('created_at', 'desc')
+            ->get();
+    }
+
+    /**
+     * Get top products with filters applied
+     */
+    private function getTopProductsFiltered()
+    {
+        return $this->model
+            ->active()
+            ->where('type', ProductTypeEnum::TOP_PRODUCT) // 2 = TOP_PRODUCT
+            ->with(['categories', 'productImages'])
+            ->filter(request()->all())
+            ->orderBy('created_at', 'desc')
+            ->get();
+    }
+
+    /**
+     * Get products by category with filters applied
+     */
+    private function getProductsByCategoryFiltered(int $categoryId)
+    {
+        return $this->model
+            ->active()
+            ->whereHas('categories', function ($query) use ($categoryId) {
+                $query->where('categories.id', $categoryId);
+            })
+            ->with(['categories', 'productImages'])
+            ->filter(request()->all())
+            ->orderBy('created_at', 'desc')
+            ->get();
+    }
+
+    /*****************************************End Cached Methods **************************************/
 
     public function getFavoriteCustomersCountByProductId($id)
     {
@@ -76,31 +322,29 @@ class ProductRepository extends BaseRepository
         // ];
         return null;
     }
+
     public function findBySlug(string $slug)
     {
         return $this->model->where('slug', $slug)
             ->with([
-
                 'categories',
                 'productImages',
                 'relatedProducts',
                 'accessories',
-
             ])
             ->withCount('orders', 'productReviews')
             ->withAvg('productReviews', 'rating')
             ->first();
     }
+
     public function getOneById(string $id)
     {
         return $this->model->where('id', $id)
             ->with([
-
                 'categories',
                 'productImages',
                 'relatedProducts',
                 'accessories',
-
             ])
             ->withCount('orders', 'productReviews')
             ->withAvg('productReviews', 'rating')
@@ -109,37 +353,33 @@ class ProductRepository extends BaseRepository
 
     public function findActiveBySlug(string $slug)
     {
-
         return $this->model
             ->active()
             ->where('slug', $slug)
             ->with([
-
                 'categories',
                 'productImages',
                 'relatedProducts',
                 'accessories',
-
-
             ])
             ->withAvg('productReviews', 'rating')
             ->first();
     }
+
     public function getOneActiveById(string $id)
     {
         return $this->model
             ->active()
             ->where('id', $id)
             ->with([
-
                 'categories',
                 'productImages',
                 'relatedProducts',
                 'accessories',
-
             ])
             ->first();
     }
+
     public function createOneByAdmin(array $data)
     {
         try {
@@ -173,23 +413,48 @@ class ProductRepository extends BaseRepository
             if (isset($data['productAccessoriesIds']) && is_array($data['productAccessoriesIds'])) {
                 $this->syncProductAccessories($data);
             }
-            DB::commit();
 
+            // Invalidate product caches
+            $this->invalidateProductCaches($data);
+
+            DB::commit();
             return $created;
         } catch (\Throwable $th) {
             dd($th->getMessage());
-
             DB::rollBack();
             return false;
         }
     }
 
+    /**
+     * Create a new product with cache invalidation
+     */
+    public function create(array $attributes)
+    {
+        try {
+            DB::beginTransaction();
+
+            $product = parent::create($attributes);
+
+            // Invalidate product caches
+            $this->invalidateProductCaches($attributes);
+
+            DB::commit();
+            return $product;
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            throw $th;
+        }
+    }
 
     public function updateOneByAdmin(array $data, int $id)
     {
         try {
             DB::beginTransaction();
             $product = $this->model->findOrFail($id);
+            $oldType = $product->type;
+            $oldCategoryIds = $product->categories->pluck('id')->toArray();
+
             if (request()->hasFile('image')) {
                 if ($product->image) {
                     $this->deleteFile($product->image);
@@ -198,43 +463,137 @@ class ProductRepository extends BaseRepository
             }
             $updated = $product->update($data);
             $data['product_id'] = $product->id;
-            $product->categories()->syncWithoutDetaching($data['categoryIds']);
+
+            if (isset($data['categoryIds']) && is_array($data['categoryIds'])) {
+                $product->categories()->sync($data['categoryIds']);
+            }
             if (isset($data['relatedProductIds']) && is_array($data['relatedProductIds'])) {
                 $this->syncRelatedProducts($data);
             }
             if (isset($data['productAccessoriesIds']) && is_array($data['productAccessoriesIds'])) {
                 $this->syncProductAccessories($data);
             }
+
+            // Invalidate product caches
+            $this->invalidateProductCaches($data, $oldType, $oldCategoryIds);
+
             DB::commit();
-
-            return $updated;
+            return $product->refresh();
         } catch (\Throwable $th) {
-
+            dd($th->getMessage());
             DB::rollBack();
             return false;
         }
     }
-       public function changeStatus(int $id)
+
+    /**
+     * Update a product with cache invalidation
+     */
+    public function update(array $attributes, $id)
+    {
+        try {
+            DB::beginTransaction();
+
+            $product = $this->find($id);
+            $oldType = $product->type;
+            $oldCategoryIds = $product->categories->pluck('id')->toArray();
+
+            $updated = parent::update($attributes, $id);
+
+            // Invalidate product caches
+            $this->invalidateProductCaches($attributes, $oldType, $oldCategoryIds);
+
+            DB::commit();
+            return $updated;
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            throw $th;
+        }
+    }
+
+    /**
+     * Delete a product with cache invalidation
+     */
+    public function delete($id)
+    {
+        try {
+            DB::beginTransaction();
+
+            $product = $this->find($id);
+            $type = $product->type;
+            $categoryIds = $product->categories->pluck('id')->toArray();
+
+            $deleted = parent::delete($id);
+
+            // Invalidate product caches
+            $this->invalidateProductCaches(['type' => $type], $type, $categoryIds);
+
+            DB::commit();
+            return $deleted;
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            throw $th;
+        }
+    }
+
+    /**
+     * Invalidate product caches based on product data
+     */
+    private function invalidateProductCaches(array $data, int $oldType = null, array $oldCategoryIds = [])
+    {
+        // Invalidate all product caches
+        app('cache.products')->invalidateAll();
+
+        // Invalidate specific type caches
+        if (isset($data['type'])) {
+            app('cache.products')->invalidate(null, $data['type']);
+        }
+        if ($oldType !== null && $oldType !== ($data['type'] ?? null)) {
+            app('cache.products')->invalidate(null, $oldType);
+        }
+
+        // Invalidate category-specific caches
+        if (isset($data['categoryIds']) && is_array($data['categoryIds'])) {
+            foreach ($data['categoryIds'] as $categoryId) {
+                app('cache.products')->invalidate($categoryId);
+            }
+        }
+
+        // Invalidate old category caches
+        foreach ($oldCategoryIds as $categoryId) {
+            app('cache.products')->invalidate($categoryId);
+        }
+    }
+
+    public function changeStatus(int $id)
     {
         try {
             DB::beginTransaction();
             $product = $this->model->findOrFail($id);
             $product->status = $product->status == Product::STATUS_ACTIVE ? Product::STATUS_INACTIVE : Product::STATUS_ACTIVE;
             $updated = $product->save();
+
+            // Invalidate product caches
+            $this->invalidateProductCaches(['type' => $product->type], null, $product->categories->pluck('id')->toArray());
+
             DB::commit();
             return $updated;
         } catch (\Throwable $th) {
-
             DB::rollBack();
             return false;
         }
     }
+
     public function changeApprovalStatus(int $id, $data)
     {
         try {
             DB::beginTransaction();
             $product = $this->model->findOrFail($id);
             $updated = $product->update($data);
+
+            // Invalidate product caches
+            $this->invalidateProductCaches(['type' => $product->type], null, $product->categories->pluck('id')->toArray());
+
             DB::commit();
             return $updated;
         } catch (\Throwable $th) {
@@ -242,52 +601,60 @@ class ProductRepository extends BaseRepository
             return false;
         }
     }
+
     public function updatePosition(array $data, int $id)
-    {
-        try {
-            DB::beginTransaction();
-            $model = $this->model->findOrFail($id);
-            $updated = $model->update($data);
-            DB::commit();
-
-            return $updated;
-        } catch (\Throwable $th) {
-
-            DB::rollBack();
-            return false;
-        }
-    }
-    public function updateProductType(int $id, $data)
     {
         try {
             DB::beginTransaction();
             $product = $this->model->findOrFail($id);
             $updated = $product->update($data);
-            DB::commit();
 
+            // Invalidate product caches since position affects ordering
+            $this->invalidateProductCaches(['type' => $product->type], null, $product->categories->pluck('id')->toArray());
+
+            DB::commit();
             return $updated;
         } catch (\Throwable $th) {
-
             DB::rollBack();
             return false;
         }
     }
-    //delete by product
+
+    public function updateProductType(int $id, $data)
+    {
+        try {
+            DB::beginTransaction();
+            $product = $this->model->findOrFail($id);
+            $oldType = $product->type;
+            $updated = $product->update($data);
+
+            // Invalidate product caches for both old and new types
+            $this->invalidateProductCaches($data, $oldType, $product->categories->pluck('id')->toArray());
+
+            DB::commit();
+            return $updated;
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return false;
+        }
+    }
+
     public function deleteOneByAdmin(int $id)
     {
         try {
             DB::beginTransaction();
-
             $product = $this->model->findOrFail($id);
-            // if ($product->image) {
-            //     $this->deleteFile($product->image);
-            // }
+            $type = $product->type;
+            $categoryIds = $product->categories->pluck('id')->toArray();
+
             $deleted = $product->delete();
+
+            // Invalidate product caches
+            $this->invalidateProductCaches(['type' => $type], $type, $categoryIds);
 
             DB::commit();
             return $deleted;
         } catch (\Throwable $th) {
-
             DB::rollBack();
             return false;
         }
@@ -297,68 +664,39 @@ class ProductRepository extends BaseRepository
     {
         try {
             DB::beginTransaction();
-
-            $product = $this->model->findOrFail($id);
-            if ($product->image) {
-                $this->deleteFile($product->image);
-                $product->image = null;
-                $product->save();
-            }
+            $image = ProductImage::findOrFail($id);
+            $this->deleteFile($image->image);
+            $deleted = $image->delete();
             DB::commit();
-            return true;
+            return $deleted;
         } catch (\Throwable $th) {
-
             DB::rollBack();
             return false;
         }
     }
 
-    /*********************************Related_products***************************************/
     public function addRelatedProducts(array $data)
     {
         try {
             DB::beginTransaction();
             $product = $this->model->findOrFail($data['product_id']);
-            $product->relatedProducts()->syncWithoutDetaching($data['relatedProductIds']);
-
-            // Ensure bidirectional relationship
-            foreach ($data['relatedProductIds'] as $relatedProductId) {
-                $relatedProduct = $this->model->findOrFail($relatedProductId);
-                $relatedProduct->relatedProducts()->syncWithoutDetaching($data['product_id']);
-            }
+            $product->relatedProducts()->attach($data['relatedProductIds']);
             DB::commit();
-            return true;
+            return $product->relatedProducts;
         } catch (\Throwable $th) {
             DB::rollBack();
             return false;
         }
     }
-
 
     public function syncRelatedProducts(array $data)
     {
         try {
             DB::beginTransaction();
             $product = $this->model->findOrFail($data['product_id']);
-
-            // Detach all old related products
-            $currentRelatedProducts = $product->relatedProducts()->pluck('related_product_id')->toArray();
-            foreach ($currentRelatedProducts as $relatedProductId) {
-                $relatedProduct = $this->model->findOrFail($relatedProductId);
-                $relatedProduct->relatedProducts()->detach($data['product_id']);
-            }
-
-            // Sync the new related products
             $product->relatedProducts()->sync($data['relatedProductIds']);
-
-            // Ensure bidirectional relationship
-            foreach ($data['relatedProductIds'] as $relatedProductId) {
-                $relatedProduct = $this->model->findOrFail($relatedProductId);
-                $relatedProduct->relatedProducts()->syncWithoutDetaching($data['product_id']);
-            }
-
             DB::commit();
-            return true;
+            return $product->relatedProducts;
         } catch (\Throwable $th) {
             DB::rollBack();
             return false;
@@ -371,13 +709,8 @@ class ProductRepository extends BaseRepository
             DB::beginTransaction();
             $product = $this->model->findOrFail($data['product_id']);
             $product->relatedProducts()->detach($data['relatedProductIds']);
-            // Ensure bidirectional relationship
-            foreach ($data['relatedProductIds'] as $relatedProductId) {
-                $relatedProduct = $this->model->findOrFail($relatedProductId);
-                $relatedProduct->relatedProducts()->detach($data['product_id']);
-            }
             DB::commit();
-            return true;
+            return $product->relatedProducts;
         } catch (\Throwable $th) {
             DB::rollBack();
             return false;
@@ -386,30 +719,22 @@ class ProductRepository extends BaseRepository
 
     public function getRelatedProducts(Product $product, $limit = 4)
     {
-        return $product->relatedProducts()->inRandomOrder()->limit($limit);
+        return $product->relatedProducts()->take($limit)->get();
     }
+
     public function getPaginatedRelatedProducts(Product $product)
     {
-        return $product->relatedProducts();
+        return $product->relatedProducts()->paginate();
     }
-    /*********************************Related_products***************************************/
 
-
-    /*********************************product_accessories***************************************/
     public function addProductAccessories(array $data)
     {
         try {
             DB::beginTransaction();
             $product = $this->model->findOrFail($data['product_id']);
-            $product->accessories()->syncWithoutDetaching($data['ProductAccessoriesIds']);
-
-            // Ensure bidirectional relationship
-            foreach ($data['ProductAccessoriesIds'] as $productAccessoryId) {
-                $productAccessory = $this->model->findOrFail($productAccessoryId);
-                $productAccessory->accessories()->syncWithoutDetaching($data['product_id']);
-            }
+            $product->accessories()->attach($data['productAccessoriesIds']);
             DB::commit();
-            return true;
+            return $product->accessories;
         } catch (\Throwable $th) {
             DB::rollBack();
             return false;
@@ -421,25 +746,9 @@ class ProductRepository extends BaseRepository
         try {
             DB::beginTransaction();
             $product = $this->model->findOrFail($data['product_id']);
-
-            // Detach all old product accessories
-            $currentProductAccessories = $product->accessories()->pluck('accessory_id')->toArray();
-            foreach ($currentProductAccessories as $productAccessoryId) {
-                $productAccessory = $this->model->findOrFail($productAccessoryId);
-                $productAccessory->accessories()->detach($data['product_id']);
-            }
-
-            // Sync the new related products
             $product->accessories()->sync($data['productAccessoriesIds']);
-
-            // Ensure bidirectional relationship
-            foreach ($data['productAccessoriesIds'] as $productAccessoryId) {
-                $productAccessory = $this->model->findOrFail($productAccessoryId);
-                $productAccessory->accessories()->syncWithoutDetaching($data['product_id']);
-            }
-
             DB::commit();
-            return true;
+            return $product->accessories;
         } catch (\Throwable $th) {
             DB::rollBack();
             return false;
@@ -452,14 +761,8 @@ class ProductRepository extends BaseRepository
             DB::beginTransaction();
             $product = $this->model->findOrFail($data['product_id']);
             $product->accessories()->detach($data['productAccessoriesIds']);
-
-            // Ensure bidirectional relationship
-            foreach ($data['productAccessoriesIds'] as $productAccessoryId) {
-                $productAccessory = $this->model->findOrFail($productAccessoryId);
-                $productAccessory->accessories()->detach($data['product_id']);
-            }
             DB::commit();
-            return true;
+            return $product->accessories;
         } catch (\Throwable $th) {
             DB::rollBack();
             return false;
@@ -468,12 +771,11 @@ class ProductRepository extends BaseRepository
 
     public function getProductAccessories(Product $product, $limit = 4)
     {
-        return $product->accessories()->inRandomOrder()->limit($limit);
+        return $product->accessories()->take($limit)->get();
     }
+
     public function getPaginatedProductAccessories(Product $product)
     {
-        return $product->accessories();
+        return $product->accessories()->paginate();
     }
-    /*********************************product_accessories***************************************/
-
 }

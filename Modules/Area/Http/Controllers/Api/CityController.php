@@ -14,9 +14,7 @@ class CityController extends Controller
 {
     use ApiResponseTrait;
 
-
     protected $cityRepository;
-
     protected $_config;
     protected $guard;
 
@@ -31,17 +29,21 @@ class CityController extends Controller
         // $this->middleware('auth:' . $this->guard);
     }
 
-
     public function getByCountryId($country_id)
     {
         try {
-            // $data = $this->cityRepository->getCachedActiveCitiesByCountryId($country_id);
-            // return $this->successResponse(CityResource::collection(resource: $data));
-            // dd(app()->getLocale());
+            $currentLocale = core()->getCurrentLocale();
+            $data = $this->cityRepository->getCachedActiveCitiesByCountryId($country_id, $currentLocale);
 
-            $data = $this->cityRepository->getActiveCitiesByCountryId($country_id)->paginate();
-            return $this->successResponse(new CityCollection($data));
+            if (!$data || $data->isEmpty()) {
+                return $this->messageResponse(
+                    __("app.data_not_found"),
+                    false,
+                    404
+                );
+            }
 
+            return $this->successResponse(CityResource::collection($data));
         } catch (Exception $e) {
             return $this->errorResponse(
                 [],
@@ -50,12 +52,22 @@ class CityController extends Controller
             );
         }
     }
+
     public function getByStateId($state_id)
     {
         try {
-            $data = $this->cityRepository->getActiveCitiesByStateId($state_id)->paginate();
-            return $this->successResponse(new CityCollection($data));
+            $currentLocale = core()->getCurrentLocale();
+            $data = $this->cityRepository->getCachedActiveCitiesByStateId($state_id, $currentLocale);
 
+            if (!$data || $data->isEmpty()) {
+                return $this->messageResponse(
+                    __("app.data_not_found"),
+                    false,
+                    404
+                );
+            }
+
+            return $this->successResponse(CityResource::collection($data));
         } catch (Exception $e) {
             return $this->errorResponse(
                 [],
@@ -64,8 +76,6 @@ class CityController extends Controller
             );
         }
     }
-
-
 
     /**
      * Show the specified resource.

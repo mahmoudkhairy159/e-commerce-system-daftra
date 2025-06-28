@@ -13,9 +13,7 @@ class StateController extends Controller
 {
     use ApiResponseTrait;
 
-
     protected $stateRepository;
-
     protected $_config;
     protected $guard;
 
@@ -30,12 +28,20 @@ class StateController extends Controller
         // $this->middleware('auth:' . $this->guard);
     }
 
-
     public function getByCountryId($country_id)
     {
         try {
-            // $data = $this->stateRepository->getCachedActiveStatesByCountryId($country_id);
-            $data = $this->stateRepository->getActiveStatesByCountryId($country_id)->get();
+            $currentLocale = core()->getCurrentLocale();
+            $data = $this->stateRepository->getCachedActiveStatesByCountryId($country_id, $currentLocale);
+
+            if (!$data || $data->isEmpty()) {
+                return $this->messageResponse(
+                    __("app.data_not_found"),
+                    false,
+                    404
+                );
+            }
+
             return $this->successResponse(StateResource::collection($data));
         } catch (Exception $e) {
             return $this->errorResponse(
@@ -45,8 +51,6 @@ class StateController extends Controller
             );
         }
     }
-
-
 
     /**
      * Show the specified resource.

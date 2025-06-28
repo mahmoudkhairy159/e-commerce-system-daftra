@@ -12,9 +12,11 @@ use Modules\Category\Transformers\Api\Category\CategoryResource;
 class CategoryController extends Controller
 {
     use ApiResponseTrait;
+
     protected $categoryRepository;
     protected $_config;
     protected $guard;
+
     public function __construct(CategoryRepository $categoryRepository)
     {
         $this->guard = 'user-api';
@@ -22,23 +24,27 @@ class CategoryController extends Controller
         Auth::setDefaultDriver($this->guard);
         $this->_config = request('_config');
         $this->categoryRepository = $categoryRepository;
-
     }
-    /**Introduction
-    Issues
-    Changelog
-    FAQ
 
+    /**
      * Display a listing of the resource.
      */
     public function index()
     {
         try {
-            $data = $this->categoryRepository->getAllActive()->get();
+            $currentLocale = core()->getCurrentLocale();
+            $data = $this->categoryRepository->getCachedActiveCategories($currentLocale);
+
+            if (!$data || $data->isEmpty()) {
+                return $this->messageResponse(
+                    __("app.data_not_found"),
+                    false,
+                    404
+                );
+            }
+
             return $this->successResponse(CategoryResource::collection($data));
         } catch (Exception $e) {
-            dd($e->getMessage());
-
             return $this->errorResponse(
                 [],
                 __('app.something-went-wrong'),
@@ -50,7 +56,16 @@ class CategoryController extends Controller
     public function getFeaturedCategories()
     {
         try {
-            $data = $this->categoryRepository->getFeaturedCategories()->get();
+            $currentLocale = core()->getCurrentLocale();
+            $data = $this->categoryRepository->getCachedFeaturedCategories($currentLocale);
+
+            if (!$data || $data->isEmpty()) {
+                return $this->messageResponse(
+                    __("app.data_not_found"),
+                    false,
+                    404
+                );
+            }
 
             return $this->successResponse(CategoryResource::collection($data));
         } catch (Exception $e) {
@@ -68,40 +83,65 @@ class CategoryController extends Controller
     public function getByParentId($parentId)
     {
         try {
-            // Fetch child categories where parent_id matches the provided parentId
-            $data = $this->categoryRepository->getByParentId($parentId)->get();
+            $currentLocale = core()->getCurrentLocale();
+            $data = $this->categoryRepository->getCachedByParentId($parentId, $currentLocale);
 
-            // Return success response with the fetched categories
+            if (!$data || $data->isEmpty()) {
+                return $this->messageResponse(
+                    __("app.data_not_found"),
+                    false,
+                    404
+                );
+            }
+
             return $this->successResponse(CategoryResource::collection($data));
         } catch (Exception $e) {
             return $this->errorResponse([], __('app.something-went-wrong'), 500);
         }
     }
+
     /**
      * Get the hierarchical structure of categories.
      */
     public function getMainCategories()
     {
         try {
-            // Retrieve all categories, and organize them in a tree structure
-            $data = $this->categoryRepository->getMainCategories()->get();
+            $currentLocale = core()->getCurrentLocale();
+            $data = $this->categoryRepository->getCachedMainCategories($currentLocale);
+
+            if (!$data || $data->isEmpty()) {
+                return $this->messageResponse(
+                    __("app.data_not_found"),
+                    false,
+                    404
+                );
+            }
+
             return $this->successResponse(CategoryResource::collection($data));
         } catch (Exception $e) {
             return $this->errorResponse([], __('app.something-went-wrong'), 500);
         }
     }
+
     public function getTreeStructure()
     {
         try {
-            // Retrieve all categories, and organize them in a tree structure
-            $data = $this->categoryRepository->getTreeStructure();
+            $currentLocale = core()->getCurrentLocale();
+            $data = $this->categoryRepository->getCachedTreeStructure($currentLocale);
+
+            if (!$data || $data->isEmpty()) {
+                return $this->messageResponse(
+                    __("app.data_not_found"),
+                    false,
+                    404
+                );
+            }
+
             return $this->successResponse(CategoryResource::collection($data));
         } catch (Exception $e) {
             return $this->errorResponse([], __('app.something-went-wrong'), 500);
         }
     }
-
-
 
     /**
      * Show the specified resource.
@@ -110,6 +150,15 @@ class CategoryController extends Controller
     {
         try {
             $data = $this->categoryRepository->getActiveOneById($id);
+
+            if (!$data) {
+                return $this->messageResponse(
+                    __("app.data_not_found"),
+                    false,
+                    404
+                );
+            }
+
             return $this->successResponse(new CategoryResource($data));
         } catch (Exception $e) {
             return $this->errorResponse(
@@ -119,21 +168,19 @@ class CategoryController extends Controller
             );
         }
     }
+
     public function showBySlug(string $slug)
     {
         try {
-            $data = $this->categoryRepository->findBySlug($slug);
+            $data = $this->categoryRepository->findActiveBySlug($slug);
+
             if (!$data) {
                 return $this->errorResponse([], __('app.data-not-found'), 404);
             }
+
             return $this->successResponse(new CategoryResource($data));
         } catch (Exception $e) {
             return $this->errorResponse([], __('app.something-went-wrong'), 500);
         }
     }
-
-
-
-
-
 }

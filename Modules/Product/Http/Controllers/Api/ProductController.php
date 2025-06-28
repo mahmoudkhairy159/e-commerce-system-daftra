@@ -6,7 +6,6 @@ use Exception;
 use App\Traits\ApiResponseTrait;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
-use Modules\Product\Enums\ProductTypeEnum;
 use Modules\Product\Repositories\ProductRepository;
 use Modules\Product\Transformers\Api\Product\ProductCollection;
 use Modules\Product\Transformers\Api\Product\ProductResource;
@@ -17,6 +16,7 @@ class ProductController extends Controller
     protected $productRepository;
     protected $_config;
     protected $guard;
+
     public function __construct(ProductRepository $productRepository)
     {
         $this->guard = 'user-api';
@@ -27,21 +27,49 @@ class ProductController extends Controller
         // permissions
         //$this->middleware('auth:' . $this->guard);
     }
-    /**Introduction
-    Issues
-    Changelog
-    FAQ
 
+    /**
+     * Get current locale for caching
+     */
+    private function getCurrentLocale(): string
+    {
+        return app()->getLocale() ?? 'en';
+    }
+
+    /**
      * Display a listing of the resource.
      */
     public function index()
     {
         try {
-            $data = $this->productRepository->getAllActive()->paginate();
-            return $this->successResponse(new  ProductCollection($data));
+            $locale = $this->getCurrentLocale();
+
+            // Use cached active products with pagination
+            $products = $this->productRepository->getCachedActiveProducts($locale);
+
+            if ($products->isEmpty()) {
+                return $this->successResponse(
+                    [],
+                    __('app.no-data-found')
+                );
+            }
+
+            // Convert collection to paginator if needed
+            if (!method_exists($products, 'total')) {
+                $page = request()->get('page', 1);
+                $perPage = request()->get('per_page', 15);
+                $products = new \Illuminate\Pagination\LengthAwarePaginator(
+                    $products->forPage($page, $perPage),
+                    $products->count(),
+                    $perPage,
+                    $page
+                );
+            }
+
+            return $this->successResponse(new ProductCollection($products));
+
         } catch (Exception $e) {
             dd($e->getMessage());
-
             return $this->errorResponse(
                 [],
                 __('app.something-went-wrong'),
@@ -49,15 +77,27 @@ class ProductController extends Controller
             );
         }
     }
+
+    /**
+     * Get featured products
+     */
     public function getFeaturedProducts()
     {
         try {
-            $type=ProductTypeEnum::FEATURED;
-            $data = $this->productRepository->getProductByType($type)->get();
-            return $this->successResponse(ProductResource::collection($data));
-        } catch (Exception $e) {
-            dd($e->getMessage());
+            $locale = $this->getCurrentLocale();
 
+            // Use cached featured products
+            $products = $this->productRepository->getCachedFeaturedProducts($locale);
+
+            if ($products->isEmpty()) {
+                return $this->successResponse(
+                    [],
+                    __('app.no-data-found')
+                );
+            }
+
+            return $this->successResponse(ProductResource::collection($products));
+        } catch (Exception $e) {
             return $this->errorResponse(
                 [],
                 __('app.something-went-wrong'),
@@ -66,9 +106,145 @@ class ProductController extends Controller
         }
     }
 
-  
+    /**
+     * Get new arrival products
+     */
+    public function getNewArrivals()
+    {
+        try {
+            $locale = $this->getCurrentLocale();
 
+            // Use cached new arrival products
+            $products = $this->productRepository->getCachedNewArrivals($locale);
 
+            if ($products->isEmpty()) {
+                return $this->successResponse(
+                    [],
+                    __('app.no-data-found')
+                );
+            }
+
+            return $this->successResponse(ProductResource::collection($products));
+        } catch (Exception $e) {
+            return $this->errorResponse(
+                [],
+                __('app.something-went-wrong'),
+                500
+            );
+        }
+    }
+
+    /**
+     * Get best seller products
+     */
+    public function getBestSellers()
+    {
+        try {
+            $locale = $this->getCurrentLocale();
+
+            // Use cached best seller products
+            $products = $this->productRepository->getCachedBestSellers($locale);
+
+            if ($products->isEmpty()) {
+                return $this->successResponse(
+                    [],
+                    __('app.no-data-found')
+                );
+            }
+
+            return $this->successResponse(ProductResource::collection($products));
+        } catch (Exception $e) {
+            return $this->errorResponse(
+                [],
+                __('app.something-went-wrong'),
+                500
+            );
+        }
+    }
+
+    /**
+     * Get top products
+     */
+    public function getTopProducts()
+    {
+        try {
+            $locale = $this->getCurrentLocale();
+
+            // Use cached top products
+            $products = $this->productRepository->getCachedTopProducts($locale);
+
+            if ($products->isEmpty()) {
+                return $this->successResponse(
+                    [],
+                    __('app.no-data-found')
+                );
+            }
+
+            return $this->successResponse(ProductResource::collection($products));
+        } catch (Exception $e) {
+            return $this->errorResponse(
+                [],
+                __('app.something-went-wrong'),
+                500
+            );
+        }
+    }
+
+    /**
+     * Get products by category
+     */
+    public function getByCategory($categoryId)
+    {
+        try {
+            $locale = $this->getCurrentLocale();
+
+            // Use cached products by category
+            $products = $this->productRepository->getCachedProductsByCategory($categoryId, $locale);
+
+            if ($products->isEmpty()) {
+                return $this->successResponse(
+                    [],
+                    __('app.no-data-found')
+                );
+            }
+
+            return $this->successResponse(ProductResource::collection($products));
+        } catch (Exception $e) {
+            return $this->errorResponse(
+                [],
+                __('app.something-went-wrong'),
+                500
+            );
+        }
+    }
+
+    /**
+     * Get products by type
+     */
+    public function getByType($type)
+    {
+        try {
+            $locale = $this->getCurrentLocale();
+
+            // Use cached products by type
+            $products = $this->productRepository->getCachedProductsByType($type, $locale);
+
+            if ($products->isEmpty()) {
+                return $this->successResponse(
+                    [],
+                    __('app.no-data-found')
+                );
+            }
+
+            return $this->successResponse(ProductResource::collection($products));
+        } catch (Exception $e) {
+            return $this->errorResponse(
+                [],
+                __('app.something-went-wrong'),
+                500
+            );
+        }
+    }
 
     /**
      * Show the specified resource.
@@ -86,8 +262,6 @@ class ProductController extends Controller
             }
             return $this->successResponse(new ProductResource($data));
         } catch (Exception $e) {
-            dd($e->getMessage());
-
             return $this->errorResponse(
                 [],
                 __('app.something-went-wrong'),
@@ -95,6 +269,10 @@ class ProductController extends Controller
             );
         }
     }
+
+    /**
+     * Show product by slug
+     */
     public function showBySlug(string $slug)
     {
         try {
@@ -115,8 +293,4 @@ class ProductController extends Controller
             );
         }
     }
-
-
-
-
 }
