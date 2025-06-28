@@ -4,22 +4,22 @@ return [
 
     "orders" => [
         "orders" => "الطلبات",
-        "order" => "الطلب",
+        "order" => "طلب",
         "show" => "عرض الطلبات",
         "create" => "إنشاء طلب",
-        "update" => "تحديث الطلب",
-        "delete" => "حذف الطلب",
-        "destroy" => "إتلاف الطلب",
+        "update" => "تحديث طلب",
+        "delete" => "حذف طلب",
+        "destroy" => "إلغاء طلب",
         "created-successfully" => "تم إنشاء الطلب بنجاح",
         "updated-successfully" => "تم تحديث الطلب بنجاح",
         "deleted-successfully" => "تم حذف الطلب بنجاح",
-        "restored-successfully" => "تم استعادة الطلب بنجاح",
-        "created-failed" => "فشل إنشاء الطلب",
-        "updated-failed" => "فشل تحديث الطلب",
-        "deleted-failed" => "فشل حذف الطلب",
-        "restored-failed" => "فشل استعادة الطلب",
+        "cancelled-successfully" => "تم إلغاء الطلب بنجاح",
+        "created-failed" => "فشل في إنشاء الطلب",
+        "updated-failed" => "فشل في تحديث الطلب",
+        "deleted-failed" => "فشل في حذف الطلب",
+        "cancellation-failed" => "فشل في إلغاء الطلب",
     ],
-    
+
     "orderProducts" => [
         "orderProducts" => "منتجات الطلب",
         "orderProduct" => "منتج الطلب",
@@ -36,6 +36,30 @@ return [
         "updated-failed" => "فشل تحديث منتج الطلب",
         "deleted-failed" => "فشل حذف منتج الطلب",
         "restored-failed" => "فشل استعادة منتج الطلب",
+    ],
+
+    "notifications" => [
+        "order_placed" => [
+            "subject" => "طلب جديد - رقم الطلب #:order_id",
+            "greeting" => "مرحباً :admin,",
+            "intro" => "تم إنشاء طلب جديد على منصة التجارة الإلكترونية. يرجى مراجعة التفاصيل أدناه:",
+            "order_details" => "تفاصيل الطلب",
+            "order_id" => "رقم الطلب",
+            "customer" => "العميل",
+            "email" => "البريد الإلكتروني",
+            "amount" => "المبلغ الإجمالي",
+            "status" => "الحالة",
+            "payment_method" => "طريقة الدفع",
+            "date" => "تاريخ الطلب",
+            "order_items" => "عناصر الطلب",
+            "product" => "المنتج",
+            "quantity" => "الكمية",
+            "price" => "السعر",
+            "subtotal" => "المجموع الفرعي",
+            "shipping_address" => "عنوان الشحن",
+            "view_order" => "عرض الطلب",
+            "outro" => "يرجى معالجة هذا الطلب في أقرب وقت ممكن لضمان رضا العميل.",
+        ],
     ],
 ];
 

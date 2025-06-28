@@ -5,6 +5,7 @@ namespace Modules\Order\Services;
 use Illuminate\Support\Facades\DB;
 use Modules\Cart\Repositories\CartRepository;
 use Modules\Order\Enums\OrderStatusEnum;
+use Modules\Order\Events\OrderPlaced;
 use Modules\Order\Models\OrderStatusHistory;
 use Modules\Order\Repositories\OrderProductRepository;
 use Modules\Order\Repositories\OrderRepository;
@@ -122,6 +123,9 @@ class PurchaseOrderService
 
             // Step 8: Empty the cart
             $this->cartRepository->emptyCart($cart->id);
+
+            // Step 9: Dispatch order placed event for notifications
+            event(new OrderPlaced($order->load('orderProducts', 'user')));
 
             DB::commit();
 

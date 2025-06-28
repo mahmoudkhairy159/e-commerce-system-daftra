@@ -13,19 +13,12 @@ class AdminSeeder extends Seeder
     public function run(): void
     {
 
-       Admin::create([
-            'name'       => 'Ahmed Salama',
-            'email'      => 'ahmed.salama@wardlin.com',
-            'password'   => '12345678',
-            // 'api_token'  => Str::random(80),
-            'status'     => 1,
-            'role_id'    => 1,
-        ]);
+
 
 
         Admin::create([
             'name'       => 'Mahmoud Khairy',
-            'email'      => 'mahmoud.khairy@wardlin.com',
+            'email'      => 'mahmoudkhairy159@gmail.com',
             'password'   => '12345678',
             // 'api_token'  => Str::random(80),
             'status'     => 1,

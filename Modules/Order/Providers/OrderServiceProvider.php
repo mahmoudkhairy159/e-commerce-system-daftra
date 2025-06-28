@@ -5,6 +5,9 @@ namespace Modules\Order\Providers;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Database\Eloquent\Factory;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Event;
+use Modules\Order\Events\OrderPlaced;
+use Modules\Order\Listeners\SendAdminOrderNotification;
 
 class OrderServiceProvider extends ServiceProvider
 {
@@ -28,6 +31,7 @@ class OrderServiceProvider extends ServiceProvider
         $this->registerTranslations();
         $this->registerConfig();
         $this->registerViews();
+        $this->registerEvents();
         $this->loadMigrationsFrom(module_path($this->moduleName, 'Database/Migrations'));
     }
 
@@ -52,7 +56,8 @@ class OrderServiceProvider extends ServiceProvider
             module_path($this->moduleName, 'Config/config.php') => config_path($this->moduleNameLower . '.php'),
         ], 'config');
         $this->mergeConfigFrom(
-            module_path($this->moduleName, 'Config/config.php'), $this->moduleNameLower
+            module_path($this->moduleName, 'Config/config.php'),
+            $this->moduleNameLower
         );
         $this->mergeConfigFrom(
             module_path($this->moduleName, 'Config/acl.php'),
@@ -116,6 +121,19 @@ class OrderServiceProvider extends ServiceProvider
         }
         return $paths;
     }
+    /**
+     * Register events and listeners.
+     *
+     * @return void
+     */
+    protected function registerEvents()
+    {
+        Event::listen(
+            OrderPlaced::class,
+            SendAdminOrderNotification::class
+        );
+    }
+
     protected function mergeConfigFrom($path, $key)
     {
         $config = $this->app->make('config');
