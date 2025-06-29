@@ -15,12 +15,6 @@ return new class extends Migration {
             $table->id();
             $table->unsignedBigInteger('user_id');
             $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
-            $table->foreignId('country_id')->nullable();
-            $table->foreign('country_id')->references('id')->on('countries')->onDelete('set null');
-            $table->foreignId('state_id')->nullable();
-            $table->foreign('state_id')->references('id')->on('states')->onDelete('set null');
-            $table->foreignId('city_id')->nullable();
-            $table->foreign('city_id')->references('id')->on('cities')->onDelete('set null');
             $table->string('zip_code')->nullable();
             $table->text('address')->nullable();
             $table->tinyInteger('type')->default(value: UserAddressEnum::HOME);

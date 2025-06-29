@@ -7,19 +7,8 @@ class CacheKeysType
     // Cache TTL in seconds (5 days)
     const CACHE_TTL_SECONDS = 432000; // 5 * 24 * 60 * 60
 
-    // Countries cache keys - locale-based
-    const COUNTRIES_CACHE_PREFIX = "COUNTRIES_CACHE_";
 
-    // States cache keys
-    const STATES_CACHE = "STATES_CACHE";
-    const STATES_CACHE_PREFIX = "STATES_CACHE_";
-    const STATES_BY_COUNTRY_CACHE_PREFIX = "STATES_BY_COUNTRY_";
 
-    // Cities cache keys
-    const CITIES_CACHE = "CITIES_CACHE";
-    const CITIES_CACHE_PREFIX = "CITIES_CACHE_";
-    const CITIES_BY_COUNTRY_CACHE_PREFIX = "CITIES_BY_COUNTRY_";
-    const CITIES_BY_STATE_CACHE_PREFIX = "CITIES_BY_STATE_";
 
     // Categories cache keys
     const CATEGORIES_CACHE = "CATEGORIES_CACHE";
@@ -49,150 +38,10 @@ class CacheKeysType
         return ['en', 'ar'];
     }
 
-    /**
-     * Get countries cache keys for all supported locales
-     */
-    public static function getCountriesCacheKeys(): array
-    {
-        $supportedLocales = self::getSupportedLocales();
-        $cacheKeys = [];
-
-        foreach ($supportedLocales as $locale) {
-            $cacheKeys[$locale] = self::COUNTRIES_CACHE_PREFIX . strtoupper($locale);
-        }
-
-        return $cacheKeys;
-    }
-
-    /**
-     * Get countries cache key for specific locale
-     */
-    public static function getCountriesCacheKey(string $locale): string
-    {
-        return self::COUNTRIES_CACHE_PREFIX . strtoupper($locale);
-    }
 
 
 
 
-    /**
-     * Get states cache key for all states
-     */
-    public static function getStatesCacheKey(): string
-    {
-        return self::STATES_CACHE;
-    }
-
-    /**
-     * Get states cache key by country ID
-     */
-    public static function getStatesByCountryCacheKey(int $countryId): string
-    {
-        return self::STATES_BY_COUNTRY_CACHE_PREFIX . $countryId;
-    }
-
-    /**
-     * Get states cache key by country ID and locale
-     */
-    public static function getStatesByCountryLocaleCacheKey(int $countryId, string $locale): string
-    {
-        return self::STATES_BY_COUNTRY_CACHE_PREFIX . $countryId . '_' . strtoupper($locale);
-    }
-
-    /**
-     * Get cities cache key for all cities
-     */
-    public static function getCitiesCacheKey(): string
-    {
-        return self::CITIES_CACHE;
-    }
-
-    /**
-     * Get cities cache key by country ID
-     */
-    public static function getCitiesByCountryCacheKey(int $countryId): string
-    {
-        return self::CITIES_BY_COUNTRY_CACHE_PREFIX . $countryId;
-    }
-
-    /**
-     * Get cities cache key by country ID and locale
-     */
-    public static function getCitiesByCountryLocaleCacheKey(int $countryId, string $locale): string
-    {
-        return self::CITIES_BY_COUNTRY_CACHE_PREFIX . $countryId . '_' . strtoupper($locale);
-    }
-
-    /**
-     * Get cities cache key by state ID
-     */
-    public static function getCitiesByStateCacheKey(int $stateId): string
-    {
-        return self::CITIES_BY_STATE_CACHE_PREFIX . $stateId;
-    }
-
-    /**
-     * Get cities cache key by state ID and locale
-     */
-    public static function getCitiesByStateLocaleCacheKey(int $stateId, string $locale): string
-    {
-        return self::CITIES_BY_STATE_CACHE_PREFIX . $stateId . '_' . strtoupper($locale);
-    }
-
-
-    /**
-     * Get all cache keys that should be invalidated when countries change
-     */
-    public static function getCountryRelatedCacheKeys(): array
-    {
-        $keys = [];
-        $locales = self::getSupportedLocales();
-
-        // Add countries cache keys
-        foreach ($locales as $locale) {
-            $keys[] = self::getCountriesCacheKey($locale);
-        }
-
-        return $keys;
-    }
-
-    /**
-     * Get all cache keys that should be invalidated when states change
-     */
-    public static function getStateRelatedCacheKeys(int $countryId): array
-    {
-        $keys = [
-            self::getStatesCacheKey(),
-            self::getStatesByCountryCacheKey($countryId)
-        ];
-
-        $locales = self::getSupportedLocales();
-        foreach ($locales as $locale) {
-            $keys[] = self::getStatesByCountryLocaleCacheKey($countryId, $locale);
-        }
-
-        return $keys;
-    }
-
-    /**
-     * Get all cache keys that should be invalidated when cities change
-     */
-    public static function getCityRelatedCacheKeys(int $countryId, int $stateId): array
-    {
-        $keys = [
-            self::getCitiesCacheKey(),
-            self::getCitiesByCountryCacheKey($countryId),
-            self::getCitiesByStateCacheKey($stateId)
-        ];
-
-        $locales = self::getSupportedLocales();
-        foreach ($locales as $locale) {
-            $keys[] = self::getCitiesByCountryLocaleCacheKey($countryId, $locale);
-            $keys[] = self::getCitiesByStateLocaleCacheKey($stateId, $locale);
-        }
-
-        return $keys;
-    }
 
     /**
      * Get categories cache key for all categories
@@ -419,16 +268,7 @@ class CacheKeysType
         return $keys;
     }
 
-    // Legacy methods for backward compatibility (deprecated)
-    public static function statesCacheKey(int $countryId): string
-    {
-        return self::getStatesByCountryCacheKey($countryId);
-    }
-
-    public static function citiesCacheKey(int $countryId): string
-    {
-        return self::getCitiesByCountryCacheKey($countryId);
-    }
+   
 
 
 }

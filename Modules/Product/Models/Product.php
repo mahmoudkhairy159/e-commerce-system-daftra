@@ -17,7 +17,6 @@ use Modules\Category\Models\Category;
 use Modules\Order\Models\Order;
 use Modules\Order\Models\OrderProduct;
 use Modules\Product\Filters\ProductFilter;
-use Modules\Wishlist\Models\WishlistProduct;
 
 class Product extends Model implements TranslatableContract
 {
@@ -191,14 +190,10 @@ class Product extends Model implements TranslatableContract
     {
         return $this->hasMany(OrderProduct::class);
     }
-    
 
 
 
-    public function wishlistProducts()
-    {
-        return $this->hasMany(WishlistProduct::class);
-    }
+
 
 
 

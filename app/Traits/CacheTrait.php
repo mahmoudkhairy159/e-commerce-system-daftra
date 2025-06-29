@@ -31,29 +31,7 @@ trait CacheTrait
         return Cache::forget($keys);
     }
 
-    /**
-     * Get countries cache service
-     */
-    protected function getCountriesCache(): object
-    {
-        return app('cache.countries');
-    }
 
-    /**
-     * Get states cache service
-     */
-    protected function getStatesCache(): object
-    {
-        return app('cache.states');
-    }
-
-    /**
-     * Get cities cache service
-     */
-    protected function getCitiesCache(): object
-    {
-        return app('cache.cities');
-    }
 
     /**
      * Get categories cache service
@@ -63,29 +41,7 @@ trait CacheTrait
         return app('cache.categories');
     }
 
-    /**
-     * Invalidate country-related caches
-     */
-    protected function invalidateCountryCache(): void
-    {
-        $this->getCountriesCache()->invalidate();
-    }
 
-    /**
-     * Invalidate state-related caches
-     */
-    protected function invalidateStateCache(int $countryId = null): void
-    {
-        $this->getStatesCache()->invalidate($countryId);
-    }
-
-    /**
-     * Invalidate city-related caches
-     */
-    protected function invalidateCityCache(int $countryId = null, int $stateId = null): void
-    {
-        $this->getCitiesCache()->invalidate($countryId, $stateId);
-    }
 
     /**
      * Invalidate category-related caches
@@ -100,9 +56,7 @@ trait CacheTrait
      */
     protected function clearAllAreaCaches(): void
     {
-        $this->invalidateCountryCache();
-        $this->invalidateStateCache();
-        $this->invalidateCityCache();
+
         $this->invalidateCategoryCache();
     }
 
@@ -111,9 +65,7 @@ trait CacheTrait
      */
     protected function warmAreaCaches(): void
     {
-        $this->getCountriesCache()->getAll();
-        $this->getStatesCache()->getAll();
-        $this->getCitiesCache()->getAll();
+       
         $this->getCategoriesCache()->getTree();
     }
 
@@ -169,9 +121,6 @@ trait CacheTrait
     protected function getCacheTags(): array
     {
         return [
-            'countries' => ['countries', 'area'],
-            'states' => ['states', 'area'],
-            'cities' => ['cities', 'area'],
             'categories' => ['categories']
         ];
     }

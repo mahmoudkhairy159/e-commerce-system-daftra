@@ -16,15 +16,6 @@ class UserAddressFilter extends ModelFilter
                   ->orWhere('zip_code', 'LIKE', "%$search%")
                   ->orWhereHas('user', function ($q) use ($search) {
                       $q->where('name', 'LIKE', "%$search%");
-                  })
-                  ->orWhereHas('country', function ($q) use ($search) {
-                      $q->where('name', 'LIKE', "%$search%");
-                  })
-                  ->orWhereHas('state', function ($q) use ($search) {
-                      $q->where('name', 'LIKE', "%$search%");
-                  })
-                  ->orWhereHas('city', function ($q) use ($search) {
-                      $q->where('name', 'LIKE', "%$search%");
                   });
         });
     }
@@ -34,30 +25,6 @@ class UserAddressFilter extends ModelFilter
     public function userId($userId)
     {
         return $this->where('user_id', $userId);
-    }
-
-    /**
-     * Filter by country_id.
-     */
-    public function countryId($countryId)
-    {
-        return $this->where('country_id', $countryId);
-    }
-
-    /**
-     * Filter by state_id.
-     */
-    public function stateId($stateId)
-    {
-        return $this->where('state_id', $stateId);
-    }
-
-    /**
-     * Filter by city_id.
-     */
-    public function cityId($cityId)
-    {
-        return $this->where('city_id', $cityId);
     }
 
     /**

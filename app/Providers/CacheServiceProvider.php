@@ -5,11 +5,9 @@ namespace App\Providers;
 use App\Types\CacheKeysType;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\ServiceProvider;
-use Modules\Area\Repositories\CityRepository;
-use Modules\Area\Repositories\StateRepository;
-use Modules\Area\Repositories\CountryRepository;
 use Modules\Category\Repositories\CategoryRepository;
 use Modules\Product\Repositories\ProductRepository;
+
 
 class CacheServiceProvider extends ServiceProvider
 {
@@ -30,122 +28,10 @@ class CacheServiceProvider extends ServiceProvider
      */
     private function registerCacheServices()
     {
-        // Register countries cache service
-        $this->app->singleton('cache.countries', function () {
-            return new class {
-                public function get(string $locale)
-                {
-                    $cacheKey = CacheKeysType::getCountriesCacheKey($locale);
-                    return Cache::remember($cacheKey, CacheKeysType::CACHE_TTL_SECONDS, function () use ($locale) {
-                        return app(CountryRepository::class)->getAllActive($locale);
-                    });
-                }
 
-                public function getAll()
-                {
-                    $result = [];
-                    foreach (['en', 'ar'] as $locale) {
-                        $result[$locale] = $this->get($locale);
-                    }
-                    return $result;
-                }
 
-                public function invalidate(string $locale = null)
-                {
-                    if ($locale) {
-                        Cache::forget(CacheKeysType::getCountriesCacheKey($locale));
-                    } else {
-                        $keys = CacheKeysType::getCountryRelatedCacheKeys();
-                        foreach ($keys as $key) {
-                            Cache::forget($key);
-                        }
-                    }
-                }
-            };
-        });
 
-        // Register states cache service
-        $this->app->singleton('cache.states', function () {
-            return new class {
-                public function getAll()
-                {
-                    $cacheKey = CacheKeysType::getStatesCacheKey();
-                    return Cache::remember($cacheKey, CacheKeysType::CACHE_TTL_SECONDS, function () {
-                        return app(StateRepository::class)->getAll()->get();
-                    });
-                }
 
-                public function getByCountry(int $countryId, string $locale = null)
-                {
-                    $cacheKey = $locale
-                        ? CacheKeysType::getStatesByCountryLocaleCacheKey($countryId, $locale)
-                        : CacheKeysType::getStatesByCountryCacheKey($countryId);
-
-                    return Cache::remember($cacheKey, CacheKeysType::CACHE_TTL_SECONDS, function () use ($countryId) {
-                        return app(StateRepository::class)->getActiveStatesByCountryId($countryId)->get();
-                    });
-                }
-
-                public function invalidate(int $countryId = null)
-                {
-                    if ($countryId) {
-                        $keys = CacheKeysType::getStateRelatedCacheKeys($countryId);
-                        foreach ($keys as $key) {
-                            Cache::forget($key);
-                        }
-                    } else {
-                        Cache::forget(CacheKeysType::getStatesCacheKey());
-                    }
-                }
-            };
-        });
-
-        // Register cities cache service
-        $this->app->singleton('cache.cities', function () {
-            return new class {
-                public function getAll()
-                {
-                    $cacheKey = CacheKeysType::getCitiesCacheKey();
-                    return Cache::remember($cacheKey, CacheKeysType::CACHE_TTL_SECONDS, function () {
-                        return app(CityRepository::class)->getAll()->get();
-                    });
-                }
-
-                public function getByCountry(int $countryId, string $locale = null)
-                {
-                    $cacheKey = $locale
-                        ? CacheKeysType::getCitiesByCountryLocaleCacheKey($countryId, $locale)
-                        : CacheKeysType::getCitiesByCountryCacheKey($countryId);
-
-                    return Cache::remember($cacheKey, CacheKeysType::CACHE_TTL_SECONDS, function () use ($countryId) {
-                        return app(CityRepository::class)->getActiveCitiesByCountryId($countryId)->get();
-                    });
-                }
-
-                public function getByState(int $stateId, string $locale = null)
-                {
-                    $cacheKey = $locale
-                        ? CacheKeysType::getCitiesByStateLocaleCacheKey($stateId, $locale)
-                        : CacheKeysType::getCitiesByStateCacheKey($stateId);
-
-                    return Cache::remember($cacheKey, CacheKeysType::CACHE_TTL_SECONDS, function () use ($stateId) {
-                        return app(CityRepository::class)->getActiveCitiesByStateId($stateId)->get();
-                    });
-                }
-
-                public function invalidate(int $countryId = null, int $stateId = null)
-                {
-                    if ($countryId && $stateId) {
-                        $keys = CacheKeysType::getCityRelatedCacheKeys($countryId, $stateId);
-                        foreach ($keys as $key) {
-                            Cache::forget($key);
-                        }
-                    } else {
-                        Cache::forget(CacheKeysType::getCitiesCacheKey());
-                    }
-                }
-            };
-        });
 
         // Register categories cache service
         $this->app->singleton('cache.categories', function () {
@@ -354,23 +240,6 @@ class CacheServiceProvider extends ServiceProvider
      */
     private function registerLegacyCacheBindings()
     {
-        $countriesCacheKeys = CacheKeysType::getCountriesCacheKeys();
-
-        // Register countries cache
-        foreach ($countriesCacheKeys as $locale => $cacheKey) {
-            $this->app->singleton($cacheKey, function () use ($locale) {
-                return app('cache.countries')->get($locale);
-            });
-        }
-
-        // Register static cache definitions
-        $this->app->singleton(CacheKeysType::CITIES_CACHE, function () {
-            return app('cache.cities')->getAll();
-        });
-
-        $this->app->singleton(CacheKeysType::STATES_CACHE, function () {
-            return app('cache.states')->getAll();
-        });
 
         $this->app->singleton(CacheKeysType::CATEGORIES_TREE_CACHE, function () {
             return app('cache.categories')->getTree();
@@ -384,12 +253,7 @@ class CacheServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        // Register cache warming commands if needed
-        if ($this->app->runningInConsole()) {
-            $this->commands([
-                // Add cache warming commands here if needed
-            ]);
-        }
+
     }
 
     /**
@@ -397,30 +261,12 @@ class CacheServiceProvider extends ServiceProvider
      */
     public function warmCache()
     {
-        // Warm countries cache
-        $countriesCache = app('cache.countries');
-        $countriesCache->getAll();
 
-        // Warm states cache
-        $statesCache = app('cache.states');
-        $statesCache->getAll();
-
-        // Warm cities cache
-        $citiesCache = app('cache.cities');
-        $citiesCache->getAll();
 
         // Warm categories cache
         $categoriesCache = app('cache.categories');
         $categoriesCache->getTree();
     }
 
-    /**
-     * Clear all area-related caches
-     */
-    public function clearAreaCaches()
-    {
-        app('cache.countries')->invalidate();
-        app('cache.states')->invalidate();
-        app('cache.cities')->invalidate();
-    }
+
 }

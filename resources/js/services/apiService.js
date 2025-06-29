@@ -195,18 +195,7 @@ class ApiService {
     }
 
 
-    // Area API methods
-    async getCountries() {
-        return this.get('/countries');
-    }
-
-    async getStatesByCountry(countryId) {
-        return this.get(`/states/country/${countryId}`);
-    }
-
-    async getCitiesByState(stateId) {
-        return this.get(`/cities/state/${stateId}`);
-    }
+  
 }
 
 const apiService = new ApiService();

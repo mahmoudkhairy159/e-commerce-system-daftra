@@ -105,7 +105,7 @@ class UserController extends Controller
     {
         try {
             $id = auth($this->guard)->id();
-            $userData = $request->only('name', 'address', 'email', 'phone' /*'country_id', 'city_id'*/);
+            $userData = $request->only('name', 'address', 'email', 'phone');
             $userProfileData = $request->only('gender', 'birth_date');
             $updated = $this->userRepository->updateOne($userData, $userProfileData, $id);
             if ($updated) {

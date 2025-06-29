@@ -40,9 +40,6 @@ class UserSeeder extends Seeder
 
             // Generate random address for each user
             $address=$user->userAddresses()->create([
-                'country_id' => 1, // Assuming Egypt is ID 1
-                'state_id' => rand(1, 27), // Random Egyptian governorate
-                'city_id' => rand(1, 20), // Random city
                 'zip_code' => rand(10000, 99999),
                 'address' => fake()->address(),
                 'type' => UserAddressEnum::getConstants()[array_rand(UserAddressEnum::getConstants())],

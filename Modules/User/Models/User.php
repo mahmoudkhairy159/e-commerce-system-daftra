@@ -16,7 +16,7 @@ use Modules\Cart\Models\Cart;
 use Modules\Order\Models\Order;
 use Modules\Order\Models\OrderStatusHistory;
 use Modules\User\Filters\UserFilter;
-use Modules\Wishlist\Models\Wishlist;
+
 
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -111,10 +111,7 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->hasOne(Cart::class);
     }
-    public function wishlist()
-    {
-        return $this->hasOne(Wishlist::class);
-    }
+
     public function userAddresses()
     {
         return $this->hasMany(UserAddress::class);

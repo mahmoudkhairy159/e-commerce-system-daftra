@@ -3,9 +3,7 @@
 namespace Modules\Admin\Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Modules\Area\Database\Seeders\CitySeeder;
-use Modules\Area\Database\Seeders\CountrySeeder;
-use Modules\Area\Database\Seeders\StateSeeder;
+
 use Modules\Category\Database\Seeders\CategorySeeder;
 use Modules\Product\Database\Seeders\ProductSeeder;
 use Modules\Shipping\Database\Seeders\ShippingMethodSeederTableSeeder;
@@ -20,9 +18,7 @@ class AdminDatabaseSeeder extends Seeder
     {
         $this->call([
 
-            CountrySeeder::class,
-            StateSeeder::class,
-            CitySeeder::class,
+
             RolesSeeder::class,
             AdminSeeder::class,
             UserSeeder::class,

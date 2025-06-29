@@ -21,17 +21,6 @@ class UserFilter extends ModelFilter
             return $q->where('status', $status);
         });
     }
-    public function countryId($countryId)
-    {
-        return $this->whereHas('userAddresses', function ($q) use ($countryId) {
-            return $q->where('country_id', $countryId);
-        });
-    }
 
-    public function cityId($cityId)
-    {
-        return $this->whereHas('userAddresses', function ($q) use ($cityId) {
-            return $q->where('city_id', $cityId);
-        });
-    }
+
 }

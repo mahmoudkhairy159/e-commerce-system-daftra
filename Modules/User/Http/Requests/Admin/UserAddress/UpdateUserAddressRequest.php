@@ -16,19 +16,6 @@ class UpdateUserAddressRequest extends FormRequest
     public function rules(): array
     {
         return [
-
-            'country_id' => [
-                'nullable',
-                'exists:countries,id',
-            ],
-            'state_id' => [
-                'nullable',
-                'exists:states,id',
-            ],
-            'city_id' => [
-                'nullable',
-                'exists:cities,id',
-            ],
             'zip_code' => [
                 'nullable',
                 'string',

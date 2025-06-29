@@ -60,9 +60,6 @@ class UpdateOrderRequest extends FormRequest
             'order_address.phone' => ['required_with:order_address', 'string'],
             'order_address.email' => ['required_with:order_address', 'email'],
             'order_address.address' => ['required_with:order_address', 'string'],
-            'order_address.city' => ['required_with:order_address', 'string'],
-            'order_address.state' => ['required_with:order_address', 'string'],
-            'order_address.country' => ['required_with:order_address', 'string'],
             'order_address.zip_code' => ['required_with:order_address', 'string'],
             'return_reason' => [
                 'required_if:status,' . OrderStatusEnum::RETURNED,
