@@ -23,6 +23,7 @@ const OrderSummarySidebar = ({
     onQuantityChange,
     onCheckout,
     loading = false,
+    isMobile = false, // New prop for mobile styling
 }) => {
     const navigate = useNavigate();
     const [checkoutLoading, setCheckoutLoading] = useState(false);
@@ -110,24 +111,29 @@ const OrderSummarySidebar = ({
     return (
         <Box
             sx={{
-                width: 320,
+                width: isMobile ? "100%" : 320,
                 bgcolor: "white",
-                borderLeft: "1px solid #e0e0e0",
-                p: 3,
-                display: { xs: "none", lg: "block" },
+                borderLeft: isMobile ? "none" : "1px solid #e0e0e0",
+                p: isMobile ? 2 : 3,
+                display: isMobile ? "block" : { xs: "none", lg: "block" },
+                height: isMobile ? "100%" : "auto",
+                overflow: isMobile ? "auto" : "visible",
             }}
         >
-            <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
-                <Typography
-                    variant="h6"
-                    sx={{ fontWeight: 600, fontSize: "18px" }}
-                >
-                    Order Summary
-                </Typography>
-                {loading && (
-                    <CircularProgress size={16} sx={{ ml: 2, color: "#666" }} />
-                )}
-            </Box>
+            {/* Hide header in mobile since it's already shown in the drawer */}
+            {!isMobile && (
+                <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
+                    <Typography
+                        variant="h6"
+                        sx={{ fontWeight: 600, fontSize: "18px" }}
+                    >
+                        Order Summary
+                    </Typography>
+                    {loading && (
+                        <CircularProgress size={16} sx={{ ml: 2, color: "#666" }} />
+                    )}
+                </Box>
+            )}
 
             {/* Cart Items */}
             {displayItems.length === 0 ? (
@@ -137,129 +143,158 @@ const OrderSummarySidebar = ({
                         flexDirection: "column",
                         alignItems: "center",
                         justifyContent: "center",
-                        py: 4,
+                        py: isMobile ? 3 : 4,
                         mb: 3,
                     }}
                 >
                     <Typography
                         variant="body1"
-                        sx={{ color: "#666", textAlign: "center", mb: 2 }}
+                        sx={{
+                            color: "#666",
+                            textAlign: "center",
+                            mb: 2,
+                            fontSize: isMobile ? "16px" : "inherit"
+                        }}
                     >
                         Your cart is empty
                     </Typography>
                     <Typography
                         variant="body2"
-                        sx={{ color: "#999", textAlign: "center" }}
+                        sx={{
+                            color: "#999",
+                            textAlign: "center",
+                            fontSize: isMobile ? "14px" : "inherit"
+                        }}
                     >
                         Add products to see them here
                     </Typography>
                 </Box>
             ) : (
-                displayItems.map((item, index) => (
-                    <Box
-                        key={item.id}
-                        sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            mb: index === displayItems.length - 1 ? 3 : 2,
-                        }}
-                    >
+                <Box sx={{
+                    maxHeight: isMobile ? "calc(100vh - 300px)" : "none",
+                    overflow: isMobile ? "auto" : "visible",
+                    mb: 3
+                }}>
+                    {displayItems.map((item, index) => (
                         <Box
-                            component="img"
-                            src={item.image}
+                            key={item.id}
                             sx={{
-                                width: 50,
-                                height: 50,
-                                borderRadius: 1,
-                                mr: 2,
+                                display: "flex",
+                                alignItems: "center",
+                                mb: index === displayItems.length - 1 ? 0 : 2,
+                                p: isMobile ? 1 : 0,
+                                border: isMobile ? "1px solid #f0f0f0" : "none",
+                                borderRadius: isMobile ? 1 : 0,
                             }}
-                        />
-                        <Box sx={{ flexGrow: 1 }}>
-                            <Typography
-                                variant="body2"
-                                sx={{ fontWeight: 500, fontSize: "14px" }}
-                            >
-                                {item.name.length > 20
-                                    ? item.name.substring(0, 20) + "..."
-                                    : item.name}
-                            </Typography>
-                            <Chip
-                                label={item.chipLabel}
-                                size="small"
+                        >
+                            <Box
+                                component="img"
+                                src={item.image}
                                 sx={{
-                                    backgroundColor: "#ff4444",
-                                    color: "white",
-                                    fontSize: "10px",
-                                    height: 16,
-                                    mb: 1,
+                                    width: isMobile ? 60 : 50,
+                                    height: isMobile ? 60 : 50,
+                                    borderRadius: 1,
+                                    mr: 2,
                                 }}
                             />
-                            <Box
-                                sx={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: 1,
-                                }}
-                            >
-                                <IconButton
-                                    size="small"
-                                    sx={{
-                                        border: "1px solid #ddd",
-                                        width: 20,
-                                        height: 20,
-                                    }}
-                                    onClick={() =>
-                                        handleQuantityChange(item.id, -1)
-                                    }
-                                    disabled={loading}
-                                >
-                                    {loading ? (
-                                        <CircularProgress size={10} />
-                                    ) : (
-                                        <Remove fontSize="small" />
-                                    )}
-                                </IconButton>
+                            <Box sx={{ flexGrow: 1 }}>
                                 <Typography
                                     variant="body2"
                                     sx={{
-                                        fontSize: "12px",
-                                        opacity: loading ? 0.6 : 1,
+                                        fontWeight: 500,
+                                        fontSize: isMobile ? "15px" : "14px",
+                                        mb: 0.5
                                     }}
                                 >
-                                    {item.quantity}
+                                    {isMobile
+                                        ? (item.name.length > 25 ? item.name.substring(0, 25) + "..." : item.name)
+                                        : (item.name.length > 20 ? item.name.substring(0, 20) + "..." : item.name)
+                                    }
                                 </Typography>
-                                <IconButton
+                                <Chip
+                                    label={item.chipLabel}
                                     size="small"
                                     sx={{
-                                        border: "1px solid #ddd",
-                                        width: 20,
-                                        height: 20,
+                                        backgroundColor: "#ff4444",
+                                        color: "white",
+                                        fontSize: isMobile ? "11px" : "10px",
+                                        height: isMobile ? 18 : 16,
+                                        mb: 1,
                                     }}
-                                    onClick={() =>
-                                        handleQuantityChange(item.id, 1)
-                                    }
-                                    disabled={loading}
+                                />
+                                <Box
+                                    sx={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: 1,
+                                    }}
                                 >
-                                    {loading ? (
-                                        <CircularProgress size={10} />
-                                    ) : (
-                                        <Add fontSize="small" />
-                                    )}
-                                </IconButton>
+                                    <IconButton
+                                        size="small"
+                                        sx={{
+                                            border: "1px solid #ddd",
+                                            width: isMobile ? 24 : 20,
+                                            height: isMobile ? 24 : 20,
+                                        }}
+                                        onClick={() =>
+                                            handleQuantityChange(item.id, -1)
+                                        }
+                                        disabled={loading}
+                                    >
+                                        {loading ? (
+                                            <CircularProgress size={isMobile ? 12 : 10} />
+                                        ) : (
+                                            <Remove fontSize="small" />
+                                        )}
+                                    </IconButton>
+                                    <Typography
+                                        variant="body2"
+                                        sx={{
+                                            fontSize: isMobile ? "14px" : "12px",
+                                            opacity: loading ? 0.6 : 1,
+                                            minWidth: isMobile ? "20px" : "16px",
+                                            textAlign: "center"
+                                        }}
+                                    >
+                                        {item.quantity}
+                                    </Typography>
+                                    <IconButton
+                                        size="small"
+                                        sx={{
+                                            border: "1px solid #ddd",
+                                            width: isMobile ? 24 : 20,
+                                            height: isMobile ? 24 : 20,
+                                        }}
+                                        onClick={() =>
+                                            handleQuantityChange(item.id, 1)
+                                        }
+                                        disabled={loading}
+                                    >
+                                        {loading ? (
+                                            <CircularProgress size={isMobile ? 12 : 10} />
+                                        ) : (
+                                            <Add fontSize="small" />
+                                        )}
+                                    </IconButton>
+                                </Box>
                             </Box>
+                            <Typography
+                                variant="body2"
+                                sx={{
+                                    fontWeight: 600,
+                                    fontSize: isMobile ? "15px" : "14px",
+                                    ml: 1
+                                }}
+                            >
+                                ${item.price}
+                            </Typography>
                         </Box>
-                        <Typography
-                            variant="body2"
-                            sx={{ fontWeight: 600, fontSize: "14px" }}
-                        >
-                            ${item.price}
-                        </Typography>
-                    </Box>
-                ))
+                    ))}
+                </Box>
             )}
 
             {/* Order Summary Calculations */}
-            <Box sx={{ mt: 3 }}>
+            <Box sx={{ mt: isMobile ? 2 : 3 }}>
                 <Box
                     sx={{
                         display: "flex",
@@ -269,13 +304,19 @@ const OrderSummarySidebar = ({
                 >
                     <Typography
                         variant="body2"
-                        sx={{ fontSize: "14px", color: "#666" }}
+                        sx={{
+                            fontSize: isMobile ? "15px" : "14px",
+                            color: "#666"
+                        }}
                     >
                         Subtotal
                     </Typography>
                     <Typography
                         variant="body2"
-                        sx={{ fontSize: "14px", fontWeight: 500 }}
+                        sx={{
+                            fontSize: isMobile ? "15px" : "14px",
+                            fontWeight: 500
+                        }}
                     >
                         ${displaySubtotal}
                     </Typography>
@@ -289,13 +330,19 @@ const OrderSummarySidebar = ({
                 >
                     <Typography
                         variant="body2"
-                        sx={{ fontSize: "14px", color: "#666" }}
+                        sx={{
+                            fontSize: isMobile ? "15px" : "14px",
+                            color: "#666"
+                        }}
                     >
                         Shipping
                     </Typography>
                     <Typography
                         variant="body2"
-                        sx={{ fontSize: "14px", fontWeight: 500 }}
+                        sx={{
+                            fontSize: isMobile ? "15px" : "14px",
+                            fontWeight: 500
+                        }}
                     >
                         ${displayShipping.toFixed(2)}
                     </Typography>
@@ -309,13 +356,19 @@ const OrderSummarySidebar = ({
                 >
                     <Typography
                         variant="body2"
-                        sx={{ fontSize: "14px", color: "#666" }}
+                        sx={{
+                            fontSize: isMobile ? "15px" : "14px",
+                            color: "#666"
+                        }}
                     >
                         Tax
                     </Typography>
                     <Typography
                         variant="body2"
-                        sx={{ fontSize: "14px", fontWeight: 500 }}
+                        sx={{
+                            fontSize: isMobile ? "15px" : "14px",
+                            fontWeight: 500
+                        }}
                     >
                         ${displayTax.toFixed(2)}
                     </Typography>
@@ -328,10 +381,22 @@ const OrderSummarySidebar = ({
                         mb: 3,
                     }}
                 >
-                    <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                    <Typography
+                        variant="subtitle1"
+                        sx={{
+                            fontWeight: 600,
+                            fontSize: isMobile ? "18px" : "inherit"
+                        }}
+                    >
                         Total
                     </Typography>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                    <Typography
+                        variant="subtitle1"
+                        sx={{
+                            fontWeight: 600,
+                            fontSize: isMobile ? "18px" : "inherit"
+                        }}
+                    >
                         ${displayTotal.toFixed(2)}
                     </Typography>
                 </Box>
@@ -344,9 +409,10 @@ const OrderSummarySidebar = ({
                                 ? "#ccc"
                                 : "#000",
                         color: "white",
-                        py: 1.5,
-                        fontSize: "14px",
+                        py: isMobile ? 2 : 1.5,
+                        fontSize: isMobile ? "16px" : "14px",
                         textTransform: "none",
+                        fontWeight: 600,
                         "&:hover": {
                             backgroundColor:
                                 cartItems.length === 0 ||
@@ -364,7 +430,7 @@ const OrderSummarySidebar = ({
                     {checkoutLoading ? (
                         <>
                             <CircularProgress
-                                size={16}
+                                size={isMobile ? 20 : 16}
                                 sx={{ mr: 1, color: "white" }}
                             />
                             Creating Order...
@@ -372,7 +438,7 @@ const OrderSummarySidebar = ({
                     ) : loading ? (
                         <>
                             <CircularProgress
-                                size={16}
+                                size={isMobile ? 20 : 16}
                                 sx={{ mr: 1, color: "white" }}
                             />
                             Updating Cart...

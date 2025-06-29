@@ -7,6 +7,8 @@ import {
     IconButton,
     Chip,
     CircularProgress,
+    useMediaQuery,
+    useTheme,
 } from "@mui/material";
 import { Add, Remove } from "@mui/icons-material";
 
@@ -20,21 +22,30 @@ const ProductCard = ({
     loading = false,
 }) => {
     const navigate = useNavigate();
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
     const handleQuantityChange = (productId, change) => {
         onQuantityChange(productId, change);
     };
 
     return (
-        <Grid item xs={12} sm={6} md={4} key={product.id}>
-            <Box sx={{ position: "relative", mb: 2 }}>
+        <Grid item xs={12} sm={6} lg={4} key={product.id}>
+            <Box
+                sx={{
+                    position: "relative",
+                    mb: 2,
+                    maxWidth: { xs: "100%", sm: "280px" },
+                    mx: "auto"
+                }}
+            >
                 <Box
                     component="img"
                     src={product.image_url || "/default.jpg"}
                     alt={product.name}
                     sx={{
                         width: "100%",
-                        height: 300,
+                        height: { xs: 250, sm: 300 },
                         objectFit: "cover",
                         borderRadius: 2,
                         cursor: "pointer",
@@ -53,13 +64,14 @@ const ProductCard = ({
                             bgcolor: "#2196f3",
                             color: "white",
                             borderRadius: "50%",
-                            width: 24,
-                            height: 24,
+                            width: { xs: 28, sm: 24 },
+                            height: { xs: 28, sm: 24 },
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
-                            fontSize: "12px",
+                            fontSize: { xs: "14px", sm: "12px" },
                             fontWeight: "bold",
+                            boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
                         }}
                     >
                         {productQuantities[product.id]}
@@ -76,10 +88,11 @@ const ProductCard = ({
                             bgcolor: "#ff4444",
                             color: "white",
                             borderRadius: 1,
-                            px: 1,
-                            py: 0.5,
-                            fontSize: "12px",
+                            px: { xs: 1.5, sm: 1 },
+                            py: { xs: 0.7, sm: 0.5 },
+                            fontSize: { xs: "13px", sm: "12px" },
                             fontWeight: "bold",
+                            boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
                         }}
                     >
                         SALE
@@ -90,19 +103,28 @@ const ProductCard = ({
             {/* Product Info */}
             <Typography
                 variant="h6"
-                sx={{ fontWeight: 500, fontSize: "16px", mb: 0.5 }}
+                sx={{
+                    fontWeight: 500,
+                    fontSize: { xs: "15px", sm: "16px" },
+                    mb: 0.5,
+                    lineHeight: 1.3,
+                    cursor: "pointer",
+                    "&:hover": { color: "#2196f3" }
+                }}
+                onClick={() => navigate(`/products/${product.slug}`)}
             >
-                {product.name.length > 30
-                    ? product.name.substring(0, 30) + "..."
-                    : product.name}
+                {isMobile
+                    ? (product.name.length > 25 ? product.name.substring(0, 25) + "..." : product.name)
+                    : (product.name.length > 30 ? product.name.substring(0, 30) + "..." : product.name)
+                }
             </Typography>
 
             <Chip
                 label={product.code}
                 size="small"
                 sx={{
-                    fontSize: "12px",
-                    height: 20,
+                    fontSize: { xs: "11px", sm: "12px" },
+                    height: { xs: 22, sm: 20 },
                     backgroundColor: "#f0f0f0",
                     color: "#666",
                     mb: 1,
@@ -111,7 +133,13 @@ const ProductCard = ({
 
             {/* Price Display */}
             <Box
-                sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}
+                sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                    mb: 0.5,
+                    flexWrap: "wrap"
+                }}
             >
                 {product.offer_price && product.offer_price < product.price ? (
                     <>
@@ -119,7 +147,7 @@ const ProductCard = ({
                             variant="h6"
                             sx={{
                                 fontWeight: 600,
-                                fontSize: "16px",
+                                fontSize: { xs: "17px", sm: "16px" },
                                 color: "#ff4444",
                             }}
                         >
@@ -128,7 +156,7 @@ const ProductCard = ({
                         <Typography
                             variant="body2"
                             sx={{
-                                fontSize: "14px",
+                                fontSize: { xs: "13px", sm: "14px" },
                                 color: "#999",
                                 textDecoration: "line-through",
                             }}
@@ -139,7 +167,10 @@ const ProductCard = ({
                 ) : (
                     <Typography
                         variant="h6"
-                        sx={{ fontWeight: 600, fontSize: "16px" }}
+                        sx={{
+                            fontWeight: 600,
+                            fontSize: { xs: "17px", sm: "16px" }
+                        }}
                     >
                         ${product.price}
                     </Typography>
@@ -149,7 +180,12 @@ const ProductCard = ({
             {/* Stock Status */}
             <Typography
                 variant="body2"
-                sx={{ color: "#666", fontSize: "12px", mb: 2 }}
+                sx={{
+                    color: product.stock > 0 ? "#666" : "#ff4444",
+                    fontSize: { xs: "11px", sm: "12px" },
+                    mb: 2,
+                    fontWeight: product.stock > 0 ? 400 : 500
+                }}
             >
                 Stock: {product.stock > 0 ? product.stock : "Out of Stock"}
             </Typography>
@@ -160,11 +196,23 @@ const ProductCard = ({
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
+                    gap: 0,
                 }}
             >
                 <IconButton
-                    size="small"
-                    sx={{ border: "1px solid #ddd", borderRadius: 0 }}
+                    size={isMobile ? "medium" : "small"}
+                    sx={{
+                        border: "1px solid #ddd",
+                        borderRadius: { xs: 1, sm: 0 },
+                        borderTopRightRadius: 0,
+                        borderBottomRightRadius: 0,
+                        width: { xs: 44, sm: "auto" },
+                        height: { xs: 44, sm: "auto" },
+                        "&:hover": {
+                            backgroundColor: "#f5f5f5",
+                            borderColor: "#999"
+                        }
+                    }}
                     onClick={() => handleQuantityChange(product.id, -1)}
                     disabled={
                         product.stock === 0 ||
@@ -173,36 +221,56 @@ const ProductCard = ({
                     }
                 >
                     {loading ? (
-                        <CircularProgress size={16} />
+                        <CircularProgress size={isMobile ? 20 : 16} />
                     ) : (
-                        <Remove fontSize="small" />
+                        <Remove fontSize={isMobile ? "medium" : "small"} />
                     )}
                 </IconButton>
                 <Typography
                     sx={{
-                        px: 2,
-                        py: 1,
+                        px: { xs: 2.5, sm: 2 },
+                        py: { xs: 1.5, sm: 1 },
                         border: "1px solid #ddd",
                         borderLeft: 0,
                         borderRight: 0,
-                        minWidth: 40,
+                        minWidth: { xs: 50, sm: 40 },
                         textAlign: "center",
-                        fontSize: "14px",
+                        fontSize: { xs: "16px", sm: "14px" },
+                        fontWeight: 500,
                         opacity: loading ? 0.6 : 1,
+                        backgroundColor: "#fafafa",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        height: { xs: 44, sm: "auto" },
                     }}
                 >
                     {productQuantities[product.id] || 0}
                 </Typography>
                 <IconButton
-                    size="small"
-                    sx={{ border: "1px solid #ddd", borderRadius: 0 }}
+                    size={isMobile ? "medium" : "small"}
+                    sx={{
+                        border: "1px solid #ddd",
+                        borderRadius: { xs: 1, sm: 0 },
+                        borderTopLeftRadius: 0,
+                        borderBottomLeftRadius: 0,
+                        width: { xs: 44, sm: "auto" },
+                        height: { xs: 44, sm: "auto" },
+                        "&:hover": {
+                            backgroundColor: "#f5f5f5",
+                            borderColor: "#999"
+                        },
+                        "&:disabled": {
+                            backgroundColor: product.stock === 0 ? "#ffebee" : "inherit"
+                        }
+                    }}
                     onClick={() => handleQuantityChange(product.id, 1)}
                     disabled={product.stock === 0 || loading}
                 >
                     {loading ? (
-                        <CircularProgress size={16} />
+                        <CircularProgress size={isMobile ? 20 : 16} />
                     ) : (
-                        <Add fontSize="small" />
+                        <Add fontSize={isMobile ? "medium" : "small"} />
                     )}
                 </IconButton>
             </Box>
