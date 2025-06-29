@@ -25,9 +25,6 @@ const ProductCard = ({
         onQuantityChange(productId, change);
     };
 
-    const getProductPosition = () => {
-        return (currentPage - 1) * perPage + quantity + 1;
-    };
 
     return (
         <Grid item xs={12} sm={6} md={4} key={product.id}>

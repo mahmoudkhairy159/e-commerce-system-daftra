@@ -43,7 +43,7 @@ const OrderSummarySidebar = ({
             };
 
             const response = await apiService.createOrder(orderData);
-         
+
 
             // Access the actual API response data (axios wraps the response in response.data)
             const apiData = response.data;
@@ -55,8 +55,7 @@ const OrderSummarySidebar = ({
                     { variant: "success" }
                 );
 
-                // Refresh cart after successful order creation
-                await fetchCart();
+
 
                 // Navigate to order details page with the order ID
                 navigate(`/orders/${apiData.data.order.id}`);
@@ -92,25 +91,7 @@ const OrderSummarySidebar = ({
         }
     };
 
-    // Default sample cart items if none provided
-    const defaultCartItems = [
-        {
-            id: 1,
-            name: "Gradient Graphic T-shirt",
-            image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=60&h=60&fit=crop",
-            quantity: 1,
-            price: 145,
-            chipLabel: "1",
-        },
-        {
-            id: 2,
-            name: "Gradient Graphic T-shirt",
-            image: "https://images.unsplash.com/photo-1503341504253-dff4815485f1?w=60&h=60&fit=crop",
-            quantity: 2,
-            price: 145,
-            chipLabel: "1",
-        },
-    ];
+
 
     const displayItems = cartItems.length > 0 ? cartItems : [];
 
