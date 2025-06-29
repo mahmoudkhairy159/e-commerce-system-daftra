@@ -15,6 +15,9 @@ import {
     Alert,
     CircularProgress,
     Chip,
+    useTheme,
+    useMediaQuery,
+    Fab,
 } from "@mui/material";
 import {
     Delete,
@@ -22,6 +25,8 @@ import {
     Remove,
     ShoppingCartOutlined,
     ArrowBack,
+    Close,
+    Receipt,
 } from "@mui/icons-material";
 import { useSnackbar } from "notistack";
 import apiService from "../services/apiService";
@@ -29,17 +34,39 @@ import apiService from "../services/apiService";
 const CartPage = () => {
     const navigate = useNavigate();
     const { enqueueSnackbar } = useSnackbar();
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+    const isSmallMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
     // Local state for cart data
     const [cartData, setCartData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [processingOrder, setProcessingOrder] = useState(false);
     const [updatingItems, setUpdatingItems] = useState(new Set());
+    const [mobileOrderSummaryOpen, setMobileOrderSummaryOpen] = useState(false);
+
+    // Calculate totals from API response
+    const subtotal = cartData ? parseFloat(cartData.sum_subtotal || 0) : 0;
+    const shipping = 0.0; // Free shipping
+    const tax = cartData ? parseFloat(cartData.sum_tax || 0) : 0;
+    const total = subtotal + shipping + tax;
+    const cartItems = cartData?.cartProducts || [];
+    const itemCount = cartData ? parseInt(cartData.sum_quantity || 0) : 0;
 
     // Fetch cart data on component mount
     useEffect(() => {
         fetchCartData();
+        // Clear any previous session storage on page entry to always start fresh
+        sessionStorage.removeItem("orderSummaryClosed");
     }, []);
+
+    // Auto-open order summary on mobile when there are items (always open by default)
+    useEffect(() => {
+        if (isMobile && cartItems.length > 0) {
+            // Always open by default when entering the page
+            setMobileOrderSummaryOpen(true);
+        }
+    }, [isMobile, cartItems.length]);
 
     const fetchCartData = async () => {
         try {
@@ -203,14 +230,6 @@ const CartPage = () => {
         }
     };
 
-    // Calculate totals from API response
-    const subtotal = cartData ? parseFloat(cartData.sum_subtotal || 0) : 0;
-    const shipping = 0.0; // Free shipping
-    const tax = cartData ? parseFloat(cartData.sum_tax || 0) : 0;
-    const total = subtotal + shipping + tax;
-    const cartItems = cartData?.cartProducts || [];
-    const itemCount = cartData ? parseInt(cartData.sum_quantity || 0) : 0;
-
     if (loading) {
         return (
             <Box
@@ -225,17 +244,47 @@ const CartPage = () => {
     }
 
     return (
-        <Box sx={{ maxWidth: 1200, mx: "auto", p: 3 }}>
+        <Box
+            sx={{
+                maxWidth: 1200,
+                mx: "auto",
+                p: { xs: 2, sm: 3 },
+                pb: {
+                    xs: mobileOrderSummaryOpen ? 10 : 3, // Only add bottom padding when summary is open
+                    md: 3,
+                },
+            }}
+        >
             {/* Header */}
-            <Box sx={{ display: "flex", alignItems: "center", mb: 4 }}>
+            <Box
+                sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    mb: { xs: 2, md: 4 },
+                    flexDirection: { xs: "column", sm: "row" },
+                    gap: { xs: 1, sm: 0 },
+                }}
+            >
                 <Button
                     startIcon={<ArrowBack />}
                     onClick={handleContinueShopping}
-                    sx={{ mr: 2 }}
+                    sx={{
+                        mr: { xs: 0, sm: 2 },
+                        mb: { xs: 1, sm: 0 },
+                        minWidth: { xs: "100%", sm: "auto" },
+                    }}
+                    size={isMobile ? "large" : "medium"}
                 >
                     Continue Shopping
                 </Button>
-                <Typography variant="h4" sx={{ flexGrow: 1, fontWeight: 600 }}>
+                <Typography
+                    variant={isSmallMobile ? "h5" : "h4"}
+                    sx={{
+                        flexGrow: 1,
+                        fontWeight: 600,
+                        textAlign: { xs: "center", sm: "left" },
+                    }}
+                >
                     Your cart
                 </Typography>
                 {cartItems.length > 0 && (
@@ -244,6 +293,11 @@ const CartPage = () => {
                         color="error"
                         onClick={handleClearCart}
                         disabled={loading}
+                        size={isMobile ? "large" : "medium"}
+                        sx={{
+                            minWidth: { xs: "100%", sm: "auto" },
+                            mt: { xs: 1, sm: 0 },
+                        }}
                     >
                         Clear Cart
                     </Button>
@@ -251,36 +305,50 @@ const CartPage = () => {
             </Box>
 
             {cartItems.length === 0 ? (
-                <Paper sx={{ textAlign: "center", py: 8 }}>
+                <Paper
+                    sx={{
+                        textAlign: "center",
+                        py: { xs: 6, md: 8 },
+                        px: { xs: 2, md: 4 },
+                    }}
+                >
                     <ShoppingCartOutlined
-                        sx={{ fontSize: 80, color: "text.secondary", mb: 2 }}
+                        sx={{
+                            fontSize: { xs: 60, md: 80 },
+                            color: "text.secondary",
+                            mb: 2,
+                        }}
                     />
-                    <Typography variant="h5" gutterBottom>
+                    <Typography variant={isMobile ? "h6" : "h5"} gutterBottom>
                         Your cart is empty
                     </Typography>
                     <Typography
                         variant="body1"
                         color="text.secondary"
                         gutterBottom
+                        sx={{ px: { xs: 2, md: 0 } }}
                     >
                         Add some products to your cart to get started
                     </Typography>
                     <Button
                         variant="contained"
                         onClick={handleContinueShopping}
+                        size="large"
                         sx={{
                             mt: 2,
                             backgroundColor: "black",
                             "&:hover": { backgroundColor: "#333" },
+                            minWidth: { xs: "200px", md: "auto" },
+                            py: { xs: 1.5, md: 1 },
                         }}
                     >
                         Shop Now
                     </Button>
                 </Paper>
             ) : (
-                <Grid container spacing={4}>
+                <Grid container spacing={{ xs: 2, md: 4 }}>
                     {/* Cart Items */}
-                    <Grid item xs={12} md={8}>
+                    <Grid item xs={12} lg={8}>
                         <Box sx={{ mb: 3 }}>
                             {cartItems.map((cartItem, index) => {
                                 const isUpdating = updatingItems.has(
@@ -293,7 +361,11 @@ const CartPage = () => {
                                         sx={{
                                             mb: 2,
                                             display: "flex",
-                                            p: 2,
+                                            flexDirection: {
+                                                xs: "column",
+                                                sm: "row",
+                                            },
+                                            p: { xs: 2, sm: 2 },
                                             boxShadow:
                                                 "0 2px 8px rgba(0,0,0,0.1)",
                                             borderRadius: 2,
@@ -303,10 +375,20 @@ const CartPage = () => {
                                         <CardMedia
                                             component="img"
                                             sx={{
-                                                width: 120,
-                                                height: 120,
+                                                width: {
+                                                    xs: "100%",
+                                                    sm: 120,
+                                                    md: 140,
+                                                },
+                                                height: {
+                                                    xs: 200,
+                                                    sm: 120,
+                                                    md: 140,
+                                                },
                                                 borderRadius: 2,
                                                 objectFit: "cover",
+                                                mb: { xs: 2, sm: 0 },
+                                                mr: { xs: 0, sm: 2 },
                                             }}
                                             image={
                                                 cartItem.product?.image_url ||
@@ -314,7 +396,15 @@ const CartPage = () => {
                                             }
                                             alt={cartItem.name}
                                         />
-                                        <CardContent sx={{ flex: 1, p: 2 }}>
+                                        <CardContent
+                                            sx={{
+                                                flex: 1,
+                                                p: { xs: 0, sm: 2 },
+                                                "&:last-child": {
+                                                    pb: { xs: 0, sm: 2 },
+                                                },
+                                            }}
+                                        >
                                             <Box
                                                 sx={{
                                                     display: "flex",
@@ -322,13 +412,36 @@ const CartPage = () => {
                                                         "space-between",
                                                     alignItems: "flex-start",
                                                     mb: 2,
+                                                    flexDirection: {
+                                                        xs: "column",
+                                                        sm: "row",
+                                                    },
+                                                    gap: { xs: 1, sm: 0 },
                                                 }}
                                             >
-                                                <Box>
+                                                <Box
+                                                    sx={{
+                                                        flex: 1,
+                                                        width: {
+                                                            xs: "100%",
+                                                            sm: "auto",
+                                                        },
+                                                    }}
+                                                >
                                                     <Typography
-                                                        variant="h6"
+                                                        variant={
+                                                            isMobile
+                                                                ? "h6"
+                                                                : "h6"
+                                                        }
                                                         gutterBottom
-                                                        sx={{ fontWeight: 600 }}
+                                                        sx={{
+                                                            fontWeight: 600,
+                                                            fontSize: {
+                                                                xs: "1.1rem",
+                                                                sm: "1.25rem",
+                                                            },
+                                                        }}
                                                     >
                                                         {cartItem.name}
                                                     </Typography>
@@ -339,8 +452,14 @@ const CartPage = () => {
                                                             backgroundColor:
                                                                 "#ff4444",
                                                             color: "white",
-                                                            fontSize: "10px",
-                                                            height: 20,
+                                                            fontSize: {
+                                                                xs: "9px",
+                                                                sm: "10px",
+                                                            },
+                                                            height: {
+                                                                xs: 18,
+                                                                sm: 20,
+                                                            },
                                                             mb: 1,
                                                         }}
                                                     />
@@ -351,6 +470,7 @@ const CartPage = () => {
                                                             alignItems:
                                                                 "center",
                                                             mb: 1,
+                                                            flexWrap: "wrap",
                                                         }}
                                                     >
                                                         <Typography
@@ -358,6 +478,10 @@ const CartPage = () => {
                                                             sx={{
                                                                 fontWeight: 600,
                                                                 color: "#000",
+                                                                fontSize: {
+                                                                    xs: "1rem",
+                                                                    sm: "1.25rem",
+                                                                },
                                                             }}
                                                         >
                                                             $
@@ -404,7 +528,19 @@ const CartPage = () => {
                                                         )
                                                     }
                                                     disabled={isUpdating}
-                                                    sx={{ color: "#ff4444" }}
+                                                    sx={{
+                                                        color: "#ff4444",
+                                                        alignSelf: {
+                                                            xs: "flex-end",
+                                                            sm: "flex-start",
+                                                        },
+                                                        mt: { xs: -1, sm: 0 },
+                                                    }}
+                                                    size={
+                                                        isMobile
+                                                            ? "large"
+                                                            : "medium"
+                                                    }
                                                 >
                                                     {isUpdating ? (
                                                         <CircularProgress
@@ -420,12 +556,20 @@ const CartPage = () => {
                                                 sx={{
                                                     display: "flex",
                                                     alignItems: "center",
-                                                    gap: 1,
+                                                    justifyContent: {
+                                                        xs: "center",
+                                                        sm: "flex-start",
+                                                    },
+                                                    gap: { xs: 2, sm: 1 },
                                                     mt: 2,
                                                 }}
                                             >
                                                 <IconButton
-                                                    size="small"
+                                                    size={
+                                                        isMobile
+                                                            ? "large"
+                                                            : "small"
+                                                    }
                                                     onClick={() =>
                                                         handleQuantityChange(
                                                             cartItem.id,
@@ -441,8 +585,14 @@ const CartPage = () => {
                                                     }
                                                     sx={{
                                                         border: "1px solid #ddd",
-                                                        width: 32,
-                                                        height: 32,
+                                                        width: {
+                                                            xs: 44,
+                                                            sm: 32,
+                                                        },
+                                                        height: {
+                                                            xs: 44,
+                                                            sm: 32,
+                                                        },
                                                     }}
                                                 >
                                                     {isUpdating ? (
@@ -455,20 +605,30 @@ const CartPage = () => {
                                                 </IconButton>
                                                 <Box
                                                     sx={{
-                                                        minWidth: 40,
+                                                        minWidth: {
+                                                            xs: 60,
+                                                            sm: 40,
+                                                        },
                                                         textAlign: "center",
-                                                        py: 1,
+                                                        py: { xs: 1.5, sm: 1 },
                                                         px: 2,
                                                         border: "1px solid #ddd",
                                                         borderRadius: 1,
-                                                        fontSize: "14px",
+                                                        fontSize: {
+                                                            xs: "16px",
+                                                            sm: "14px",
+                                                        },
                                                         fontWeight: 500,
                                                     }}
                                                 >
                                                     {cartItem.quantity}
                                                 </Box>
                                                 <IconButton
-                                                    size="small"
+                                                    size={
+                                                        isMobile
+                                                            ? "large"
+                                                            : "small"
+                                                    }
                                                     onClick={() =>
                                                         handleQuantityChange(
                                                             cartItem.id,
@@ -480,8 +640,14 @@ const CartPage = () => {
                                                     disabled={isUpdating}
                                                     sx={{
                                                         border: "1px solid #ddd",
-                                                        width: 32,
-                                                        height: 32,
+                                                        width: {
+                                                            xs: 44,
+                                                            sm: 32,
+                                                        },
+                                                        height: {
+                                                            xs: 44,
+                                                            sm: 32,
+                                                        },
                                                     }}
                                                 >
                                                     {isUpdating ? (
@@ -501,185 +667,386 @@ const CartPage = () => {
                     </Grid>
 
                     {/* Order Summary */}
-                    <Grid item xs={12} md={4}>
-                        <Paper
-                            sx={{
-                                p: 3,
-                                position: "sticky",
-                                top: 100,
-                                boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-                                borderRadius: 3,
-                            }}
-                        >
-                            <Box
+                    <Grid item xs={12} lg={4}>
+                        {/* Show order summary conditionally on mobile, always on desktop */}
+                        {(!isMobile || mobileOrderSummaryOpen) && (
+                            <Paper
                                 sx={{
-                                    display: "flex",
-                                    justifyContent: "space-between",
-                                    alignItems: "center",
-                                    mb: 3,
+                                    p: { xs: 2, sm: 3 },
+                                    position: { xs: "fixed", lg: "sticky" },
+                                    bottom: { xs: 0, lg: "auto" },
+                                    left: { xs: 0, lg: "auto" },
+                                    right: { xs: 0, lg: "auto" },
+                                    top: { xs: "auto", lg: 100 },
+                                    boxShadow: {
+                                        xs: "0 -4px 12px rgba(0,0,0,0.15)",
+                                        lg: "0 4px 12px rgba(0,0,0,0.15)",
+                                    },
+                                    borderRadius: {
+                                        xs: "12px 12px 0 0",
+                                        lg: 3,
+                                    },
+                                    zIndex: { xs: 1000, lg: "auto" },
+                                    maxHeight: { xs: "50vh", lg: "none" },
+                                    overflowY: { xs: "auto", lg: "visible" },
+                                    transform: {
+                                        xs: mobileOrderSummaryOpen
+                                            ? "translateY(0)"
+                                            : "translateY(100%)",
+                                        lg: "translateY(0)",
+                                    },
+                                    transition: {
+                                        xs: "transform 0.3s ease-in-out",
+                                        lg: "none",
+                                    },
                                 }}
                             >
-                                <Typography
-                                    variant="h6"
-                                    sx={{ fontWeight: 600 }}
-                                >
-                                    Order Summary ( #
-                                    {Math.floor(Math.random() * 1000) + 100} )
-                                </Typography>
-                                <Typography
-                                    variant="body2"
-                                    color="text.secondary"
-                                >
-                                    {new Date().toLocaleDateString("en-US", {
-                                        day: "numeric",
-                                        month: "long",
-                                        year: "numeric",
-                                    })}
-                                </Typography>
-                            </Box>
-
-                            <Box sx={{ mb: 3 }}>
                                 <Box
                                     sx={{
                                         display: "flex",
                                         justifyContent: "space-between",
-                                        mb: 2,
-                                    }}
-                                >
-                                    <Typography
-                                        variant="body1"
-                                        color="text.secondary"
-                                    >
-                                        Subtotal
-                                    </Typography>
-                                    <Typography
-                                        variant="body1"
-                                        sx={{ fontWeight: 500 }}
-                                    >
-                                        ${subtotal.toFixed(2)}
-                                    </Typography>
-                                </Box>
-
-                                <Box
-                                    sx={{
-                                        display: "flex",
-                                        justifyContent: "space-between",
-                                        mb: 2,
-                                    }}
-                                >
-                                    <Typography
-                                        variant="body1"
-                                        color="text.secondary"
-                                    >
-                                        Shipping
-                                    </Typography>
-                                    <Typography
-                                        variant="body1"
-                                        sx={{ fontWeight: 500 }}
-                                    >
-                                        ${shipping.toFixed(2)}
-                                    </Typography>
-                                </Box>
-
-                                <Box
-                                    sx={{
-                                        display: "flex",
-                                        justifyContent: "space-between",
+                                        alignItems: "flex-start",
                                         mb: 3,
+                                        position: "relative",
                                     }}
                                 >
-                                    <Typography
-                                        variant="body1"
-                                        color="text.secondary"
-                                    >
-                                        Tax
-                                    </Typography>
-                                    <Typography
-                                        variant="body1"
-                                        sx={{ fontWeight: 500 }}
-                                    >
-                                        ${tax.toFixed(2)}
-                                    </Typography>
+                                    {/* Close button for mobile - positioned absolutely */}
+                                    {isMobile && (
+                                        <IconButton
+                                            onClick={() => {
+                                                setMobileOrderSummaryOpen(
+                                                    false
+                                                );
+                                                // Remember that user closed the summary
+                                                sessionStorage.setItem(
+                                                    "orderSummaryClosed",
+                                                    "true"
+                                                );
+                                            }}
+                                            size="large"
+                                            sx={{
+                                                position: "absolute",
+                                                top: -8,
+                                                right: -8,
+                                                backgroundColor:
+                                                    "rgba(255,255,255,0.9)",
+                                                color: "text.primary",
+                                                zIndex: 10,
+                                                boxShadow:
+                                                    "0 2px 8px rgba(0,0,0,0.1)",
+                                                "&:hover": {
+                                                    backgroundColor:
+                                                        "rgba(255,255,255,1)",
+                                                    color: "error.main",
+                                                },
+                                                width: 40,
+                                                height: 40,
+                                            }}
+                                        >
+                                            <Close fontSize="medium" />
+                                        </IconButton>
+                                    )}
+
+                                    <Box sx={{ flex: 1, pr: isMobile ? 4 : 0 }}>
+                                        <Typography
+                                            variant={isMobile ? "h6" : "h6"}
+                                            sx={{
+                                                fontWeight: 600,
+                                                fontSize: {
+                                                    xs: "1.1rem",
+                                                    sm: "1.25rem",
+                                                },
+                                                mb: { xs: 1, sm: 0 },
+                                            }}
+                                        >
+                                            Order Summary ( #
+                                            {Math.floor(Math.random() * 1000) +
+                                                100}{" "}
+                                            )
+                                        </Typography>
+                                        <Typography
+                                            variant="body2"
+                                            color="text.secondary"
+                                            sx={{
+                                                fontSize: {
+                                                    xs: "0.8rem",
+                                                    sm: "0.875rem",
+                                                },
+                                            }}
+                                        >
+                                            {new Date().toLocaleDateString(
+                                                "en-US",
+                                                {
+                                                    day: "numeric",
+                                                    month: "long",
+                                                    year: "numeric",
+                                                }
+                                            )}
+                                        </Typography>
+                                    </Box>
                                 </Box>
 
-                                <Divider sx={{ my: 2 }} />
-
-                                <Box
-                                    sx={{
-                                        display: "flex",
-                                        justifyContent: "space-between",
-                                        mb: 3,
-                                    }}
-                                >
-                                    <Typography
-                                        variant="h6"
-                                        sx={{ fontWeight: 600 }}
-                                    >
-                                        Total
-                                    </Typography>
-                                    <Typography
-                                        variant="h6"
+                                <Box sx={{ mb: 3 }}>
+                                    <Box
                                         sx={{
-                                            fontWeight: 600,
-                                            fontSize: "1.25rem",
+                                            display: "flex",
+                                            justifyContent: "space-between",
+                                            mb: 2,
                                         }}
                                     >
-                                        ${total.toFixed(2)}
-                                    </Typography>
-                                </Box>
-                            </Box>
+                                        <Typography
+                                            variant="body1"
+                                            color="text.secondary"
+                                            sx={{
+                                                fontSize: {
+                                                    xs: "0.9rem",
+                                                    sm: "1rem",
+                                                },
+                                            }}
+                                        >
+                                            Subtotal
+                                        </Typography>
+                                        <Typography
+                                            variant="body1"
+                                            sx={{
+                                                fontWeight: 500,
+                                                fontSize: {
+                                                    xs: "0.9rem",
+                                                    sm: "1rem",
+                                                },
+                                            }}
+                                        >
+                                            ${subtotal.toFixed(2)}
+                                        </Typography>
+                                    </Box>
 
-                            <Button
-                                fullWidth
-                                variant="contained"
-                                size="large"
-                                onClick={handleCheckout}
-                                disabled={
-                                    loading ||
-                                    processingOrder ||
-                                    cartItems.length === 0 ||
-                                    updatingItems.size > 0
-                                }
-                                sx={{
-                                    backgroundColor: "#000",
-                                    color: "white",
-                                    py: 2,
-                                    fontSize: "16px",
-                                    fontWeight: 600,
-                                    textTransform: "none",
-                                    borderRadius: 2,
-                                    "&:hover": {
-                                        backgroundColor: "#333",
-                                    },
-                                    "&:disabled": {
-                                        backgroundColor: "#ccc",
-                                        color: "#666",
-                                    },
-                                }}
-                            >
-                                {processingOrder ? (
-                                    <>
-                                        <CircularProgress
-                                            size={20}
-                                            sx={{ mr: 1, color: "white" }}
-                                        />
-                                        Creating Order...
-                                    </>
-                                ) : updatingItems.size > 0 ? (
-                                    <>
-                                        <CircularProgress
-                                            size={20}
-                                            sx={{ mr: 1, color: "white" }}
-                                        />
-                                        Updating Cart...
-                                    </>
-                                ) : (
-                                    "Place the order"
-                                )}
-                            </Button>
-                        </Paper>
+                                    <Box
+                                        sx={{
+                                            display: "flex",
+                                            justifyContent: "space-between",
+                                            mb: 2,
+                                        }}
+                                    >
+                                        <Typography
+                                            variant="body1"
+                                            color="text.secondary"
+                                            sx={{
+                                                fontSize: {
+                                                    xs: "0.9rem",
+                                                    sm: "1rem",
+                                                },
+                                            }}
+                                        >
+                                            Shipping
+                                        </Typography>
+                                        <Typography
+                                            variant="body1"
+                                            sx={{
+                                                fontWeight: 500,
+                                                fontSize: {
+                                                    xs: "0.9rem",
+                                                    sm: "1rem",
+                                                },
+                                            }}
+                                        >
+                                            ${shipping.toFixed(2)}
+                                        </Typography>
+                                    </Box>
+
+                                    <Box
+                                        sx={{
+                                            display: "flex",
+                                            justifyContent: "space-between",
+                                            mb: 3,
+                                        }}
+                                    >
+                                        <Typography
+                                            variant="body1"
+                                            color="text.secondary"
+                                            sx={{
+                                                fontSize: {
+                                                    xs: "0.9rem",
+                                                    sm: "1rem",
+                                                },
+                                            }}
+                                        >
+                                            Tax
+                                        </Typography>
+                                        <Typography
+                                            variant="body1"
+                                            sx={{
+                                                fontWeight: 500,
+                                                fontSize: {
+                                                    xs: "0.9rem",
+                                                    sm: "1rem",
+                                                },
+                                            }}
+                                        >
+                                            ${tax.toFixed(2)}
+                                        </Typography>
+                                    </Box>
+
+                                    <Divider sx={{ my: 2 }} />
+
+                                    <Box
+                                        sx={{
+                                            display: "flex",
+                                            justifyContent: "space-between",
+                                            mb: 3,
+                                        }}
+                                    >
+                                        <Typography
+                                            variant="h6"
+                                            sx={{
+                                                fontWeight: 600,
+                                                fontSize: {
+                                                    xs: "1.1rem",
+                                                    sm: "1.25rem",
+                                                },
+                                            }}
+                                        >
+                                            Total
+                                        </Typography>
+                                        <Typography
+                                            variant="h6"
+                                            sx={{
+                                                fontWeight: 600,
+                                                fontSize: {
+                                                    xs: "1.2rem",
+                                                    sm: "1.25rem",
+                                                },
+                                            }}
+                                        >
+                                            ${total.toFixed(2)}
+                                        </Typography>
+                                    </Box>
+                                </Box>
+
+                                <Button
+                                    fullWidth
+                                    variant="contained"
+                                    size="large"
+                                    onClick={handleCheckout}
+                                    disabled={
+                                        loading ||
+                                        processingOrder ||
+                                        cartItems.length === 0 ||
+                                        updatingItems.size > 0
+                                    }
+                                    sx={{
+                                        backgroundColor: "#000",
+                                        color: "white",
+                                        py: { xs: 2.5, sm: 2 },
+                                        fontSize: { xs: "18px", sm: "16px" },
+                                        fontWeight: 600,
+                                        textTransform: "none",
+                                        borderRadius: 2,
+                                        minHeight: { xs: 56, sm: 48 },
+                                        "&:hover": {
+                                            backgroundColor: "#333",
+                                        },
+                                        "&:disabled": {
+                                            backgroundColor: "#ccc",
+                                            color: "#666",
+                                        },
+                                    }}
+                                >
+                                    {processingOrder ? (
+                                        <>
+                                            <CircularProgress
+                                                size={20}
+                                                sx={{ mr: 1, color: "white" }}
+                                            />
+                                            Creating Order...
+                                        </>
+                                    ) : updatingItems.size > 0 ? (
+                                        <>
+                                            <CircularProgress
+                                                size={20}
+                                                sx={{ mr: 1, color: "white" }}
+                                            />
+                                            Updating Cart...
+                                        </>
+                                    ) : (
+                                        "Place the order"
+                                    )}
+                                </Button>
+                            </Paper>
+                        )}
                     </Grid>
                 </Grid>
+            )}
+
+            {/* Mobile backdrop overlay */}
+            {isMobile && mobileOrderSummaryOpen && (
+                <Box
+                    onClick={() => {
+                        setMobileOrderSummaryOpen(false);
+                        // Remember that user closed the summary
+                        sessionStorage.setItem("orderSummaryClosed", "true");
+                    }}
+                    sx={{
+                        position: "fixed",
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        backgroundColor: "rgba(0,0,0,0.3)",
+                        zIndex: 999,
+                        transition: "opacity 0.3s ease-in-out",
+                    }}
+                />
+            )}
+
+            {/* Floating Order Summary Button for Mobile */}
+            {isMobile && !mobileOrderSummaryOpen && cartItems.length > 0 && (
+                <Box
+                    sx={{
+                        position: "fixed",
+                        bottom: 24,
+                        right: 24,
+                        zIndex: 1001,
+                    }}
+                >
+                    <Fab
+                        onClick={() => {
+                            setMobileOrderSummaryOpen(true);
+                            // Clear the closed flag when user explicitly opens
+                            sessionStorage.removeItem("orderSummaryClosed");
+                        }}
+                        sx={{
+                            backgroundColor: "#000",
+                            color: "white",
+                            "&:hover": {
+                                backgroundColor: "#333",
+                            },
+                            boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
+                            position: "relative",
+                        }}
+                        aria-label="Open order summary"
+                    >
+                        <Receipt />
+                    </Fab>
+                    {/* Total amount badge */}
+                    <Box
+                        sx={{
+                            position: "absolute",
+                            top: -8,
+                            right: -8,
+                            backgroundColor: "#ff4444",
+                            color: "white",
+                            borderRadius: "12px",
+                            padding: "4px 8px",
+                            fontSize: "12px",
+                            fontWeight: 600,
+                            minWidth: "24px",
+                            textAlign: "center",
+                            boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+                        }}
+                    >
+                        ${total.toFixed(0)}
+                    </Box>
+                </Box>
             )}
         </Box>
     );
