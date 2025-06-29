@@ -7,7 +7,6 @@ use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Validation\Rule;
-use Modules\Order\Enums\OrderPaymentMethodEnum;
 use Modules\Order\Enums\OrderStatusEnum;
 
 class UpdateOrderRequest extends FormRequest
@@ -29,14 +28,12 @@ class UpdateOrderRequest extends FormRequest
         $canBeCancelled = [
             OrderStatusEnum::PENDING,
             OrderStatusEnum::PROCESSING,
-            OrderStatusEnum::CONFIRMED,
-            OrderStatusEnum::ON_HOLD
+            OrderStatusEnum::SHIPPED
         ];
 
         // Define which statuses allow marking as returned
         $canBeReturned = [
-            OrderStatusEnum::DELIVERED,
-            OrderStatusEnum::COMPLETED
+            OrderStatusEnum::DELIVERED
         ];
 
         return [
@@ -46,11 +43,11 @@ class UpdateOrderRequest extends FormRequest
                 Rule::in($allowedStatusTransitions),
                 function ($attribute, $value, $fail) use ($order, $canBeCancelled, $canBeReturned) {
                     if ($value === OrderStatusEnum::CANCELLED && !in_array($order->status, $canBeCancelled)) {
-                        $fail('You can only cancel orders with pending, processing, confirmed or on hold status.');
+                        $fail('You can only cancel orders with pending, processing or shipped status.');
                     }
 
                     if ($value === OrderStatusEnum::RETURNED && !in_array($order->status, $canBeReturned)) {
-                        $fail('You can only mark delivered or completed orders as returned.');
+                        $fail('You can only mark delivered orders as returned.');
                     }
                 },
             ],
@@ -99,10 +96,9 @@ class UpdateOrderRequest extends FormRequest
 
         // Check if the order status prevents modification
         if ($order && in_array($order->status, [
-            OrderStatusEnum::SHIPPING,
+            OrderStatusEnum::SHIPPED,
             OrderStatusEnum::CANCELLED,
             OrderStatusEnum::REFUNDED,
-            OrderStatusEnum::FAILED,
             OrderStatusEnum::RETURNED
         ])) {
             // Remove ability to update address for these statuses
@@ -115,8 +111,7 @@ class UpdateOrderRequest extends FormRequest
             !in_array($order->status, [
                 OrderStatusEnum::PENDING,
                 OrderStatusEnum::PROCESSING,
-                OrderStatusEnum::CONFIRMED,
-                OrderStatusEnum::ON_HOLD
+                OrderStatusEnum::SHIPPED
             ])) {
             $this->request->remove('status');
         }
