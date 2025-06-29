@@ -11,7 +11,7 @@ import {
     Slider,
     Chip,
 } from "@mui/material";
-import { Close, ExpandMore } from "@mui/icons-material";
+import { Close, ExpandMore, FilterList } from "@mui/icons-material";
 
 const ProductsFilters = ({
     categories,
@@ -27,6 +27,7 @@ const ProductsFilters = ({
     const [hasUnsavedFilters, setHasUnsavedFilters] = useState(false);
     const [appliedPriceRange, setAppliedPriceRange] = useState([0, 5000]);
     const [appliedCategories, setAppliedCategories] = useState({});
+    const [desktopSidebarOpen, setDesktopSidebarOpen] = useState(true);
 
     // Initialize categories when they load
     useEffect(() => {
@@ -121,6 +122,10 @@ const ProductsFilters = ({
             priceRange: clearedPriceRange,
             categories: clearedCategories,
         });
+    };
+
+    const toggleDesktopSidebar = () => {
+        setDesktopSidebarOpen(!desktopSidebarOpen);
     };
 
     const FilterContent = () => (
@@ -332,49 +337,104 @@ const ProductsFilters = ({
     return (
         <>
             {/* Desktop Filter Sidebar */}
-            <Box
-                sx={{
-                    width: 300,
-                    bgcolor: "white",
-                    borderRight: "1px solid #e0e0e0",
-                    p: 3,
-                    display: { xs: "none", lg: "block" },
-                }}
-            >
+            {desktopSidebarOpen ? (
                 <Box
                     sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        mb: 3,
+                        width: 300,
+                        bgcolor: "white",
+                        borderRight: "1px solid #e0e0e0",
+                        p: 3,
+                        display: { xs: "none", lg: "block" },
                     }}
                 >
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                        <Typography
-                            variant="h6"
-                            sx={{ fontWeight: 600, fontSize: "18px" }}
+                    <Box
+                        sx={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            mb: 3,
+                        }}
+                    >
+                        <Box
+                            sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 1,
+                            }}
                         >
-                            Filters
-                        </Typography>
-                        {hasUnsavedFilters && (
-                            <Chip
-                                label="Changes"
-                                size="small"
-                                sx={{
-                                    backgroundColor: "#2196f3",
-                                    color: "white",
-                                    fontSize: "10px",
-                                    height: 20,
-                                    fontWeight: 500,
-                                }}
-                            />
-                        )}
+                            <Typography
+                                variant="h6"
+                                sx={{ fontWeight: 600, fontSize: "18px" }}
+                            >
+                                Filters
+                            </Typography>
+                            {hasUnsavedFilters && (
+                                <Chip
+                                    label="Changes"
+                                    size="small"
+                                    sx={{
+                                        backgroundColor: "#2196f3",
+                                        color: "white",
+                                        fontSize: "10px",
+                                        height: 20,
+                                        fontWeight: 500,
+                                    }}
+                                />
+                            )}
+                        </Box>
+                        <IconButton onClick={toggleDesktopSidebar} size="small">
+                            <Close sx={{ color: "#999" }} />
+                        </IconButton>
                     </Box>
-                    <Close sx={{ color: "#999", cursor: "pointer" }} />
-                </Box>
 
-                <FilterContent />
-            </Box>
+                    <FilterContent />
+                </Box>
+            ) : (
+                <Box
+                    sx={{
+                        width: 60,
+                        bgcolor: "white",
+                        borderRight: "1px solid #e0e0e0",
+                        p: 2,
+                        display: { xs: "none", lg: "flex" },
+                        flexDirection: "column",
+                        alignItems: "center",
+                    }}
+                >
+                    <IconButton
+                        onClick={toggleDesktopSidebar}
+                        sx={{
+                            mb: 2,
+                            backgroundColor: hasUnsavedFilters
+                                ? "#f0f8ff"
+                                : "transparent",
+                            border: hasUnsavedFilters
+                                ? "2px solid #2196f3"
+                                : "none",
+                            "&:hover": {
+                                backgroundColor: "#f5f5f5",
+                            },
+                        }}
+                    >
+                        <FilterList
+                            sx={{
+                                color: hasUnsavedFilters ? "#2196f3" : "#666",
+                            }}
+                        />
+                    </IconButton>
+                    {hasUnsavedFilters && (
+                        <Box
+                            sx={{
+                                width: 8,
+                                height: 8,
+                                backgroundColor: "#2196f3",
+                                borderRadius: "50%",
+                                mt: -1,
+                            }}
+                        />
+                    )}
+                </Box>
+            )}
 
             {/* Mobile Filter Drawer */}
             <Drawer
