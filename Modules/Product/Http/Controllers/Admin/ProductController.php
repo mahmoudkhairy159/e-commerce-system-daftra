@@ -6,7 +6,6 @@ use App\Traits\CacheTrait;
 use Exception;
 use App\Traits\ApiResponseTrait;
 use App\Http\Controllers\Controller;
-use App\Types\CacheKeysType;
 use Illuminate\Support\Facades\Auth;
 use Modules\Product\Http\Requests\Admin\Product\BulkUpdateStatusRequest;
 use Modules\Product\Http\Requests\Admin\Product\ChangeApprovalStatusRequest;
@@ -84,7 +83,7 @@ class ProductController extends Controller
         }
     }
 
-   
+
     /**
      * Store a newly created resource in storage.
      */

@@ -6,7 +6,6 @@ use App\Traits\CacheTrait;
 use Exception;
 use App\Traits\ApiResponseTrait;
 use App\Http\Controllers\Controller;
-use App\Types\CacheKeysType;
 use Illuminate\Support\Facades\Auth;
 use Modules\Category\Http\Requests\Admin\Category\BulkUpdateStatusRequest;
 use Modules\Category\Http\Requests\Admin\Category\StoreCategoryRequest;
@@ -256,6 +255,6 @@ class CategoryController extends Controller
     }
     private function clearCategoriesCache()
     {
-        $this->deleteCache(CacheKeysType::CATEGORIES_CACHE);
+        $this->invalidateCategoryCache();
     }
 }

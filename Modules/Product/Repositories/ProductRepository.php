@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Modules\Product\Repositories;
 
 use App\Traits\SoftDeletableTrait;
@@ -16,7 +18,7 @@ class ProductRepository extends BaseRepository
     use SoftDeletableTrait;
     use CacheTrait;
 
-    public $retrievedData = [
+    public array $retrievedData = [
         'id',
         'code',
         'image',
@@ -102,98 +104,98 @@ class ProductRepository extends BaseRepository
             return $this->getAllFiltered();
         }
 
-        return app('cache.products')->getAll();
+        return $this->getProductsCache()->getAll();
     }
 
     /**
      * Get cached active products with filter support
      */
-    public function getCachedActiveProducts(string $locale = null)
+    public function getCachedActiveProducts(?string $locale = null)
     {
         // If filters are present, query database directly with filters
         if (!$this->shouldUseCache()) {
             return $this->getAllActiveFiltered();
         }
 
-        return app('cache.products')->getAllActive($locale);
+        return $this->getProductsCache()->getAllActive($locale);
     }
 
     /**
      * Get cached products by type with filter support
      */
-    public function getCachedProductsByType(int $type, string $locale = null)
+    public function getCachedProductsByType(int $type, ?string $locale = null)
     {
         // If filters are present, query database directly with filters
         if (!$this->shouldUseCache()) {
             return $this->getProductByTypeFiltered($type);
         }
 
-        return app('cache.products')->getByType($type, $locale);
+        return $this->getProductsCache()->getByType($type, $locale);
     }
 
     /**
      * Get cached featured products with filter support
      */
-    public function getCachedFeaturedProducts(string $locale = null)
+    public function getCachedFeaturedProducts(?string $locale = null)
     {
         // If filters are present, query database directly with filters
         if (!$this->shouldUseCache()) {
             return $this->getFeaturedProductsFiltered();
         }
 
-        return app('cache.products')->getFeatured($locale);
+        return $this->getProductsCache()->getFeatured($locale);
     }
 
     /**
      * Get cached new arrival products with filter support
      */
-    public function getCachedNewArrivals(string $locale = null)
+    public function getCachedNewArrivals(?string $locale = null)
     {
         // If filters are present, query database directly with filters
         if (!$this->shouldUseCache()) {
             return $this->getNewArrivalsFiltered();
         }
 
-        return app('cache.products')->getNewArrivals($locale);
+        return $this->getProductsCache()->getNewArrivals($locale);
     }
 
     /**
      * Get cached best seller products with filter support
      */
-    public function getCachedBestSellers(string $locale = null)
+    public function getCachedBestSellers(?string $locale = null)
     {
         // If filters are present, query database directly with filters
         if (!$this->shouldUseCache()) {
             return $this->getBestSellersFiltered();
         }
 
-        return app('cache.products')->getBestSellers($locale);
+        return $this->getProductsCache()->getBestSellers($locale);
     }
 
     /**
      * Get cached top products with filter support
      */
-    public function getCachedTopProducts(string $locale = null)
+    public function getCachedTopProducts(?string $locale = null)
     {
         // If filters are present, query database directly with filters
         if (!$this->shouldUseCache()) {
             return $this->getTopProductsFiltered();
         }
 
-        return app('cache.products')->getTopProducts($locale);
+        return $this->getProductsCache()->getTopProducts($locale);
     }
 
     /**
      * Get cached products by category with filter support
      */
-    public function getCachedProductsByCategory(int $categoryId, string $locale = null)
+    public function getCachedProductsByCategory(int $categoryId, ?string $locale = null)
     {
         // If filters are present, query database directly with filters
         if (!$this->shouldUseCache()) {
             return $this->getProductsByCategoryFiltered($categoryId);
         }
 
-        return app('cache.products')->getByCategory($categoryId, $locale);
+        return $this->getProductsCache()->getByCategory($categoryId, $locale);
     }
 
     /*****************************************Filtered Query Methods ********************************************/
@@ -529,29 +531,29 @@ class ProductRepository extends BaseRepository
     /**
      * Invalidate product caches based on product data
      */
-    private function invalidateProductCaches(array $data, int $oldType = null, array $oldCategoryIds = [])
+    private function invalidateProductCaches(array $data, ?int $oldType = null, array $oldCategoryIds = [])
     {
         // Invalidate all product caches
-        app('cache.products')->invalidateAll();
+        $this->invalidateAllProductCaches();
 
         // Invalidate specific type caches
         if (isset($data['type'])) {
-            app('cache.products')->invalidate(null, $data['type']);
+            $this->invalidateProductCache(null, $data['type']);
         }
         if ($oldType !== null && $oldType !== ($data['type'] ?? null)) {
-            app('cache.products')->invalidate(null, $oldType);
+            $this->invalidateProductCache(null, $oldType);
         }
 
         // Invalidate category-specific caches
         if (isset($data['categoryIds']) && is_array($data['categoryIds'])) {
             foreach ($data['categoryIds'] as $categoryId) {
-                app('cache.products')->invalidate($categoryId);
+                $this->invalidateProductCache($categoryId);
             }
         }
 
         // Invalidate old category caches
         foreach ($oldCategoryIds as $categoryId) {
-            app('cache.products')->invalidate($categoryId);
+            $this->invalidateProductCache($categoryId);
         }
     }
 

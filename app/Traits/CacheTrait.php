@@ -1,7 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Traits;
 
+use App\Services\Cache\CategoryCacheService;
+use App\Services\Cache\ProductCacheService;
 use App\Types\CacheKeysType;
 use Illuminate\Support\Facades\Cache;
 
@@ -10,7 +14,7 @@ trait CacheTrait
     /**
      * Remember a value in cache with the specified TTL
      */
-    protected function remember(string $key, callable $callback, int $ttl = null): mixed
+    protected function remember(string $key, callable $callback, ?int $ttl = null): mixed
     {
         $ttl = $ttl ?? CacheKeysType::CACHE_TTL_SECONDS;
         return Cache::remember($key, $ttl, $callback);
@@ -19,7 +23,7 @@ trait CacheTrait
     /**
      * Forget cache key(s)
      */
-    protected function forget($keys): bool
+    protected function forget(string|array $keys): bool
     {
         if (is_array($keys)) {
             foreach ($keys as $key) {
@@ -31,17 +35,21 @@ trait CacheTrait
         return Cache::forget($keys);
     }
 
-
-
     /**
      * Get categories cache service
      */
-    protected function getCategoriesCache(): object
+    protected function getCategoriesCache(): CategoryCacheService
     {
         return app('cache.categories');
     }
 
-
+    /**
+     * Get products cache service
+     */
+    protected function getProductsCache(): ProductCacheService
+    {
+        return app('cache.products');
+    }
 
     /**
      * Invalidate category-related caches
@@ -52,86 +60,45 @@ trait CacheTrait
     }
 
     /**
-     * Clear all area-related caches
+     * Invalidate product-related caches
      */
-    protected function clearAllAreaCaches(): void
+    protected function invalidateProductCache(?int $categoryId = null, ?int $type = null): void
+    {
+        $this->getProductsCache()->invalidateSpecific($categoryId, $type);
+    }
+
+    /**
+     * Invalidate all product caches
+     */
+    protected function invalidateAllProductCaches(): void
+    {
+        $this->getProductsCache()->invalidateAll();
+    }
+
+    /**
+     * Clear all caches
+     */
+    protected function clearAllCaches(): void
     {
         $this->invalidateCategoryCache();
-    }
-
-
-    /**
-     * Tags for cache invalidation (if using cache tags)
-     */
-    protected function getCacheTags(): array
-    {
-        return [
-            'categories' => ['categories']
-        ];
-    }
-
-    /**
-     * Generate cache key with prefix
-     */
-    protected function generateCacheKey(string $prefix, ...$parts): string
-    {
-        $key = $prefix;
-        foreach ($parts as $part) {
-            $key .= '_' . $part;
-        }
-        return strtoupper($key);
-    }
-
-    public function getCache(string $key)
-    {
-        return Cache::get($key);
-    }
-
-    public function setCache(string $key, $value, $timeout)
-    {
-        return Cache::remember($key, $timeout, function () use ($value) {
-            return $value;
-        });
-    }
-    public function deleteCache(string $key)
-    {
-        return Cache::forget($key);
-    }
-    public function deleteCaches(array $keys)
-    {
-        foreach ($keys as $key) {
-            $this->deleteCache($key);
-        }
-    }
-
-    public function clearCache()
-    {
-        return Cache::flush();
-    }
-
-    public function getCacheKeys()
-    {
-        return Cache::keys();
+        $this->invalidateAllProductCaches();
     }
 
     /**
      * Check if request has filter parameters
      */
-    public function hasFilterParameters(): bool
+    protected function hasFilterParameters(): bool
     {
-        $request = request();
-        $filterParams = $request->except(['page', 'per_page', 'limit', '_config', 'token']);
-
+        $filterParams = request()->except(['page', 'per_page', 'limit', '_config', 'token']);
         return !empty($filterParams);
     }
 
     /**
      * Get filter parameters as string for cache key
      */
-    public function getFilterCacheKey(): string
+    protected function getFilterCacheKey(): string
     {
-        $request = request();
-        $filterParams = $request->except(['page', 'per_page', 'limit', '_config', 'token']);
+        $filterParams = request()->except(['page', 'per_page', 'limit', '_config', 'token']);
 
         if (empty($filterParams)) {
             return '';
@@ -146,17 +113,30 @@ trait CacheTrait
     /**
      * Get filtered cache key with base key
      */
-    public function getFilteredCacheKey(string $baseKey): string
+    protected function getFilteredCacheKey(string $baseKey): string
     {
-        $filterKey = $this->getFilterCacheKey();
-        return $baseKey . $filterKey;
+        return $baseKey . $this->getFilterCacheKey();
     }
 
     /**
      * Check if should use cache (no filters) or database (with filters)
      */
-    public function shouldUseCache(): bool
+    protected function shouldUseCache(): bool
     {
         return !$this->hasFilterParameters();
     }
+
+    /**
+     * Generate cache key with prefix
+     */
+    protected function generateCacheKey(string $prefix, string ...$parts): string
+    {
+        $key = $prefix;
+        foreach ($parts as $part) {
+            $key .= '_' . $part;
+        }
+        return strtoupper($key);
+    }
+
+
 }

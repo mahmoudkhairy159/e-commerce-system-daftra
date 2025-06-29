@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Modules\Category\Repositories;
 
 use App\Traits\SoftDeletableTrait;
@@ -16,7 +18,7 @@ class CategoryRepository extends BaseRepository
     use SoftDeletableTrait;
     use CacheTrait;
 
-    public $retrievedData = [
+    public array $retrievedData = [
         'id',
         'name',
         'slug',
@@ -53,8 +55,6 @@ class CategoryRepository extends BaseRepository
             ->orderBy('position', 'asc');
     }
 
-
-
     /*****************************************End Retrieving For Users **************************************/
 
     /***************************************** Cached Methods **************************************/
@@ -69,29 +69,21 @@ class CategoryRepository extends BaseRepository
             return $this->getAllFiltered();
         }
 
-        return app('cache.categories')->getAll();
+        return $this->getCategoriesCache()->getAll();
     }
 
     /**
      * Get cached active categories with filter support
      */
-    public function getCachedActiveCategories(string $locale = null)
+    public function getCachedActiveCategories(?string $locale = null)
     {
         // If filters are present, query database directly with filters
         if (!$this->shouldUseCache()) {
             return $this->getAllActiveFiltered();
         }
 
-        return app('cache.categories')->getAllActive($locale);
+        return $this->getCategoriesCache()->getAllActive($locale);
     }
-
-
-
-
-
-
-
-
 
     /*****************************************Filtered Query Methods ********************************************/
 
@@ -117,7 +109,6 @@ class CategoryRepository extends BaseRepository
             ->orderBy('position', 'asc')
             ->get();
     }
-
 
     /*****************************************End Cached Methods **************************************/
 
@@ -163,6 +154,7 @@ class CategoryRepository extends BaseRepository
 
             // Invalidate category caches
             $this->invalidateCategoryCache();
+
             DB::commit();
             return $created;
         } catch (\Throwable $th) {
@@ -170,7 +162,6 @@ class CategoryRepository extends BaseRepository
             return false;
         }
     }
-
 
     public function updateOne(array $data, int $id)
     {
@@ -185,10 +176,12 @@ class CategoryRepository extends BaseRepository
                 }
                 $data['image'] = $this->uploadFile(request()->file('image'), 'categories');
             }
+
             $updated = $category->update($data);
 
             // Invalidate category caches
             $this->invalidateCategoryCache();
+
             DB::commit();
             return $category->refresh();
         } catch (\Throwable $th) {
@@ -206,7 +199,6 @@ class CategoryRepository extends BaseRepository
             DB::beginTransaction();
 
             $category = $this->find($id);
-            $oldParentId = $category->parent_id;
 
             if (request()->hasFile('image')) {
                 if ($category->image) {
@@ -220,16 +212,6 @@ class CategoryRepository extends BaseRepository
             // Invalidate category caches
             $this->invalidateCategoryCache();
 
-            // Invalidate old parent cache
-            if ($oldParentId) {
-                app('cache.categories')->invalidate($oldParentId);
-            }
-
-            // Invalidate new parent cache if different
-            if (isset($attributes['parent_id']) && $attributes['parent_id'] && $attributes['parent_id'] !== $oldParentId) {
-                app('cache.categories')->invalidate($attributes['parent_id']);
-            }
-
             DB::commit();
             return $updated;
         } catch (\Throwable $th) {
@@ -242,13 +224,12 @@ class CategoryRepository extends BaseRepository
     {
         try {
             DB::beginTransaction();
-            $category = $this->model->findOrFail($id);
 
+            $category = $this->model->findOrFail($id);
             $deleted = $category->delete();
 
             // Invalidate category caches
             $this->invalidateCategoryCache();
-
 
             DB::commit();
             return $deleted;
@@ -258,11 +239,11 @@ class CategoryRepository extends BaseRepository
         }
     }
 
-
     public function restore(int $id)
     {
         try {
             DB::beginTransaction();
+
             $model = $this->model->withTrashed()->findOrFail($id);
             $restored = $model->restore();
 
@@ -279,8 +260,6 @@ class CategoryRepository extends BaseRepository
 
     /*********** Additional Functions **************/
 
-   
-
     public function bulkUpdateStatus(array $ids, int $status)
     {
         try {
@@ -288,8 +267,8 @@ class CategoryRepository extends BaseRepository
 
             $updated = $this->model->whereIn('id', $ids)->update(['status' => $status]);
 
-            // Invalidate all category caches since multiple categories changed
-            app('cache.categories')->invalidateAll();
+            // Invalidate category caches
+            $this->invalidateCategoryCache();
 
             DB::commit();
             return $updated;
@@ -299,30 +278,17 @@ class CategoryRepository extends BaseRepository
         }
     }
 
-    private function uploadAndDeleteImage($file = null, $existingImage = null)
-    {
-        if ($file) {
-            if ($existingImage) {
-                $this->deleteFile($existingImage);
-            }
-            return $this->uploadFile($file, 'categories');
-        }
-        return $existingImage;
-    }
-
     public function changeStatus(int $id)
     {
         try {
             DB::beginTransaction();
+
             $category = $this->model->findOrFail($id);
             $newStatus = $category->status == Category::STATUS_ACTIVE ? Category::STATUS_INACTIVE : Category::STATUS_ACTIVE;
             $category->update(['status' => $newStatus]);
 
             // Invalidate category caches
             $this->invalidateCategoryCache();
-            if ($category->parent_id) {
-                app('cache.categories')->invalidate($category->parent_id);
-            }
 
             DB::commit();
             return $category;
@@ -336,14 +302,12 @@ class CategoryRepository extends BaseRepository
     {
         try {
             DB::beginTransaction();
+
             $category = $this->model->findOrFail($id);
             $category->update($data);
 
             // Invalidate category caches since position affects ordering
             $this->invalidateCategoryCache();
-            if ($category->parent_id) {
-                app('cache.categories')->invalidate($category->parent_id);
-            }
 
             DB::commit();
             return $category;
