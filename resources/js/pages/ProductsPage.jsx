@@ -20,8 +20,11 @@ import {
     MenuItem,
     FormControl,
     InputLabel,
+    Drawer,
+    Badge,
+    Fab,
 } from "@mui/material";
-import { FilterList, Search, ShoppingCart } from "@mui/icons-material";
+import { FilterList, Search, ShoppingCart, Close } from "@mui/icons-material";
 
 import { useSnackbar } from "notistack";
 import apiService from "../services/apiService";
@@ -35,6 +38,8 @@ const ProductsPage = () => {
     const navigate = useNavigate();
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
+    const isTablet = useMediaQuery(theme.breakpoints.down("md"));
+    const isSmallMobile = useMediaQuery(theme.breakpoints.down("sm"));
     const { addToCart, cart, getCartTotal } = useCart();
     const { user, isAuthenticated } = useAuth();
     const { enqueueSnackbar } = useSnackbar();
@@ -48,6 +53,7 @@ const ProductsPage = () => {
     const [searchTerm, setSearchTerm] = useState(""); // API search term (triggers API calls)
     const [searchInput, setSearchInput] = useState(""); // UI input value (no API calls)
     const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
+    const [cartDrawerOpen, setCartDrawerOpen] = useState(false);
     const [productQuantities, setProductQuantities] = useState({});
     const [currentPage, setCurrentPage] = useState(1);
     const [pagination, setPagination] = useState({
@@ -90,9 +96,7 @@ const ProductsPage = () => {
                         id: cartProduct.id,
                         product_id: cartProduct.product_id,
                         name: cartProduct.name,
-                        image:
-                            cartProduct.product.image_url ||
-                            "/default.jpg",
+                        image: cartProduct.product.image_url || "/default.jpg",
                         quantity: parseInt(cartProduct.quantity),
                         price: parseFloat(cartProduct.price),
                         chipLabel: cartProduct.product.code,
@@ -534,8 +538,74 @@ const ProductsPage = () => {
 
     return (
         <Box>
+            {/* Mobile Cart FAB */}
+            {isMobile && cartData.items.length > 0 && (
+                <Fab
+                    color="primary"
+                    sx={{
+                        position: "fixed",
+                        bottom: 80,
+                        right: 16,
+                        zIndex: 1000,
+                        backgroundColor: "#000",
+                        "&:hover": {
+                            backgroundColor: "#333",
+                        },
+                    }}
+                    onClick={() => setCartDrawerOpen(true)}
+                >
+                    <Badge badgeContent={cartData.items.length} color="error">
+                        <ShoppingCart />
+                    </Badge>
+                </Fab>
+            )}
+
+            {/* Mobile Cart Drawer */}
+            <Drawer
+                anchor="right"
+                open={cartDrawerOpen}
+                onClose={() => setCartDrawerOpen(false)}
+                sx={{
+                    display: { xs: "block", lg: "none" },
+                    "& .MuiDrawer-paper": {
+                        width: "100%",
+                        maxWidth: 400,
+                    },
+                }}
+            >
+                <Box
+                    sx={{
+                        p: 2,
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                    }}
+                >
+                    <Typography variant="h6">Shopping Cart</Typography>
+                    <IconButton onClick={() => setCartDrawerOpen(false)}>
+                        <Close />
+                    </IconButton>
+                </Box>
+                <OrderSummarySidebar
+                    cartItems={cartData.items}
+                    subtotal={cartData.subtotal}
+                    shipping={cartData.shipping}
+                    tax={cartData.tax}
+                    total={cartData.total}
+                    onQuantityChange={handleCartQuantityChange}
+                    loading={cartLoading}
+                    isMobile={true}
+                />
+            </Drawer>
+
             {/* Main Layout */}
-            <Box sx={{ display: "flex", minHeight: "90vh" }}>
+            <Box
+                sx={{
+                    display: "flex",
+                    minHeight: "90vh",
+                    flexDirection: { xs: "column", lg: "row" },
+                }}
+            >
                 {/* Filters Component */}
                 <ProductsFilters
                     categories={categories}
@@ -547,9 +617,18 @@ const ProductsPage = () => {
                 />
 
                 {/* Main Content */}
-                <Box sx={{ flex: 1, bgcolor: "white", p: 3 }}>
+                <Box
+                    sx={{
+                        flex: 1,
+                        bgcolor: "white",
+                        p: { xs: 2, sm: 3 },
+                        order: { xs: 2, lg: 1 },
+                    }}
+                >
                     {/* Breadcrumbs */}
-                    <Breadcrumbs sx={{ mb: 2 }}>
+                    <Breadcrumbs
+                        sx={{ mb: 2, display: { xs: "none", sm: "flex" } }}
+                    >
                         <Link
                             underline="hover"
                             color="inherit"
@@ -567,37 +646,76 @@ const ProductsPage = () => {
                         </Typography>
                     </Breadcrumbs>
 
-                    {/* Filter Toggle and Search */}
+                    {/* Mobile Header */}
+                    <Box
+                        sx={{
+                            display: { xs: "flex", sm: "none" },
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            mb: 2,
+                        }}
+                    >
+                        <Typography
+                            variant="h5"
+                            sx={{ fontWeight: 600, fontSize: "24px" }}
+                        >
+                            Products
+                        </Typography>
+                        <IconButton
+                            onClick={() => setFilterDrawerOpen(true)}
+                            sx={{
+                                border: "1px solid #e0e0e0",
+                                borderRadius: 2,
+                            }}
+                        >
+                            <FilterList />
+                        </IconButton>
+                    </Box>
+
+                    {/* Search and Sort Section */}
                     <Box
                         sx={{
                             display: "flex",
-                            alignItems: "center",
+                            flexDirection: { xs: "column", sm: "row" },
+                            alignItems: { xs: "stretch", sm: "center" },
                             gap: 2,
                             mb: 3,
                             justifyContent: "space-between",
                         }}
                     >
+                        {/* Search Section */}
                         <Box
                             sx={{
                                 display: "flex",
                                 alignItems: "center",
-                                gap: 2,
+                                gap: 1,
+                                flex: { xs: "none", sm: 1 },
+                                maxWidth: { xs: "100%", sm: 500 },
                             }}
                         >
+                            {/* Desktop Filter Toggle */}
                             <IconButton
                                 onClick={() => setFilterDrawerOpen(true)}
-                                sx={{ display: { lg: "none" } }}
+                                sx={{
+                                    display: {
+                                        xs: "none",
+                                        sm: "block",
+                                        lg: "none",
+                                    },
+                                    mr: 1,
+                                }}
                             >
                                 <FilterList />
                             </IconButton>
+
+                            {/* Search Input */}
                             <Box
                                 sx={{
                                     display: "flex",
                                     alignItems: "flex-start",
                                     gap: 0,
                                     position: "relative",
-                                    maxWidth: { xs: "100%", sm: 400 },
-                                    width: { xs: "100%", sm: "auto" },
+                                    width: "100%",
                                 }}
                             >
                                 <TextField
@@ -605,7 +723,7 @@ const ProductsPage = () => {
                                     helperText={
                                         searchInput !== searchTerm &&
                                         searchInput.trim() !== ""
-                                            ? "Press Enter or click Search to apply"
+                                            ? "Press Enter or tap Search to apply"
                                             : ""
                                     }
                                     value={searchInput}
@@ -615,6 +733,7 @@ const ProductsPage = () => {
                                     onKeyPress={handleSearchKeyPress}
                                     onBlur={handleSearchBlur}
                                     size="small"
+                                    fullWidth
                                     InputProps={{
                                         startAdornment: (
                                             <InputAdornment position="start">
@@ -655,8 +774,7 @@ const ProductsPage = () => {
                                         },
                                     }}
                                     sx={{
-                                        minWidth: { xs: 250, sm: 320 },
-                                        flex: { xs: 1, sm: "none" },
+                                        flex: 1,
                                         "& .MuiOutlinedInput-root": {
                                             borderTopRightRadius: 0,
                                             borderBottomRightRadius: 0,
@@ -714,18 +832,25 @@ const ProductsPage = () => {
                                             <Search
                                                 sx={{
                                                     fontSize: "18px !important",
+                                                    display: {
+                                                        xs: "none",
+                                                        sm: "block",
+                                                    },
                                                 }}
                                             />
                                         )
                                     }
                                     sx={{
-                                        minWidth: "auto",
+                                        minWidth: { xs: 80, sm: "auto" },
                                         height: "40px",
-                                        px:
-                                            searchInput !== searchTerm &&
-                                            searchInput.trim() !== ""
-                                                ? 3
-                                                : 2.5,
+                                        px: {
+                                            xs: 2,
+                                            sm:
+                                                searchInput !== searchTerm &&
+                                                searchInput.trim() !== ""
+                                                    ? 3
+                                                    : 2.5,
+                                        },
                                         borderTopLeftRadius: 0,
                                         borderBottomLeftRadius: 0,
                                         backgroundColor: searchApplied
@@ -742,7 +867,7 @@ const ProductsPage = () => {
                                             : "#666",
                                         color: "white",
                                         fontWeight: 600,
-                                        fontSize: "14px",
+                                        fontSize: { xs: "13px", sm: "14px" },
                                         textTransform: "none",
                                         boxShadow: searchApplied
                                             ? "0 2px 8px rgba(76, 175, 80, 0.3)"
@@ -781,7 +906,6 @@ const ProductsPage = () => {
                                                 left: "100%",
                                             },
                                         },
-
                                         "&.Mui-disabled": {
                                             backgroundColor: "#ccc",
                                             color: "#999",
@@ -807,7 +931,10 @@ const ProductsPage = () => {
                         </Box>
 
                         {/* Sort dropdown */}
-                        <FormControl size="small" sx={{ minWidth: 150 }}>
+                        <FormControl
+                            size="small"
+                            sx={{ minWidth: { xs: "100%", sm: 150 } }}
+                        >
                             <InputLabel>Sort by</InputLabel>
                             <Select
                                 value={sortBy}
@@ -822,19 +949,40 @@ const ProductsPage = () => {
                         </FormControl>
                     </Box>
 
-                    {/* Page Title and Results Count */}
-                    <Typography
-                        variant="h4"
-                        sx={{ fontWeight: 600, mb: 1, fontSize: "32px" }}
-                    >
-                        Products
-                    </Typography>
+                    {/* Desktop Page Title and Results Count */}
+                    <Box sx={{ display: { xs: "none", sm: "block" } }}>
+                        <Typography
+                            variant="h4"
+                            sx={{
+                                fontWeight: 600,
+                                mb: 1,
+                                fontSize: { sm: "28px", md: "32px" },
+                            }}
+                        >
+                            Products
+                        </Typography>
+                        <Typography
+                            variant="body2"
+                            sx={{ mb: 4, color: "#666", fontSize: "14px" }}
+                        >
+                            Showing {pagination.from}-{pagination.to} of{" "}
+                            {pagination.total} Products
+                        </Typography>
+                    </Box>
+
+                    {/* Mobile Results Count */}
                     <Typography
                         variant="body2"
-                        sx={{ mb: 4, color: "#666", fontSize: "14px" }}
+                        sx={{
+                            display: { xs: "block", sm: "none" },
+                            mb: 3,
+                            color: "#666",
+                            fontSize: "13px",
+                            textAlign: "center",
+                        }}
                     >
-                        Showing {pagination.from}-{pagination.to} of{" "}
-                        {pagination.total} Products
+                        {pagination.from}-{pagination.to} of {pagination.total}{" "}
+                        Products
                     </Typography>
 
                     {/* Loading overlay */}
@@ -848,7 +996,12 @@ const ProductsPage = () => {
                             }}
                         >
                             <CircularProgress size={isDebouncing ? 20 : 40} />
-                            <Typography sx={{ ml: 2 }}>
+                            <Typography
+                                sx={{
+                                    ml: 2,
+                                    fontSize: { xs: "14px", sm: "16px" },
+                                }}
+                            >
                                 {isDebouncing
                                     ? "Updating results..."
                                     : "Loading products..."}
@@ -864,12 +1017,18 @@ const ProductsPage = () => {
                                 flexDirection: "column",
                                 alignItems: "center",
                                 justifyContent: "center",
-                                py: 8,
+                                py: { xs: 6, sm: 8 },
+                                px: 2,
+                                textAlign: "center",
                             }}
                         >
                             <Typography
                                 variant="h5"
-                                sx={{ mb: 2, color: "#666" }}
+                                sx={{
+                                    mb: 2,
+                                    color: "#666",
+                                    fontSize: { xs: "20px", sm: "24px" },
+                                }}
                             >
                                 No products found
                             </Typography>
@@ -879,6 +1038,7 @@ const ProductsPage = () => {
                                     mb: 3,
                                     color: "#999",
                                     textAlign: "center",
+                                    fontSize: { xs: "14px", sm: "16px" },
                                 }}
                             >
                                 Try adjusting your search criteria or filters to
@@ -887,12 +1047,21 @@ const ProductsPage = () => {
                             <Button
                                 variant="outlined"
                                 onClick={handleClearAllFilters}
+                                sx={{
+                                    borderRadius: 2,
+                                    textTransform: "none",
+                                    px: 3,
+                                }}
                             >
                                 Clear Filters
                             </Button>
                         </Box>
                     ) : (
-                        <Grid container spacing={3} sx={{ mb: 4 }}>
+                        <Grid
+                            container
+                            spacing={{ xs: 2, sm: 3 }}
+                            sx={{ mb: 4 }}
+                        >
                             {products.map((product, index) => (
                                 <ProductCard
                                     key={product.id}
@@ -917,6 +1086,7 @@ const ProductsPage = () => {
                                 display: "flex",
                                 justifyContent: "center",
                                 mt: 4,
+                                px: 2,
                             }}
                         >
                             <Pagination
@@ -924,12 +1094,17 @@ const ProductsPage = () => {
                                 page={pagination.current_page}
                                 onChange={handlePageChange}
                                 disabled={loading || isDebouncing}
+                                size={isSmallMobile ? "small" : "medium"}
+                                siblingCount={isSmallMobile ? 0 : 1}
                                 sx={{
                                     "& .MuiPaginationItem-root": {
                                         color:
                                             loading || isDebouncing
                                                 ? "#ccc"
                                                 : "#666",
+                                        fontSize: { xs: "14px", sm: "16px" },
+                                        minWidth: { xs: "32px", sm: "40px" },
+                                        height: { xs: "32px", sm: "40px" },
                                         "&.Mui-selected": {
                                             backgroundColor:
                                                 loading || isDebouncing
@@ -944,16 +1119,18 @@ const ProductsPage = () => {
                     )}
                 </Box>
 
-                {/* Order Summary Sidebar */}
-                <OrderSummarySidebar
-                    cartItems={cartData.items}
-                    subtotal={cartData.subtotal}
-                    shipping={cartData.shipping}
-                    tax={cartData.tax}
-                    total={cartData.total}
-                    onQuantityChange={handleCartQuantityChange}
-                    loading={cartLoading}
-                />
+                {/* Desktop Order Summary Sidebar */}
+                <Box sx={{ display: { xs: "none", lg: "block" }, order: 3 }}>
+                    <OrderSummarySidebar
+                        cartItems={cartData.items}
+                        subtotal={cartData.subtotal}
+                        shipping={cartData.shipping}
+                        tax={cartData.tax}
+                        total={cartData.total}
+                        onQuantityChange={handleCartQuantityChange}
+                        loading={cartLoading}
+                    />
+                </Box>
             </Box>
         </Box>
     );
