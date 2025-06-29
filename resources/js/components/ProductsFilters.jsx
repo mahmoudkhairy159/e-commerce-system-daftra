@@ -20,6 +20,8 @@ const ProductsFilters = ({
     isMobile,
     filterDrawerOpen,
     setFilterDrawerOpen,
+    resetTrigger,
+    initialFilters,
 }) => {
     // Filter states
     const [priceRange, setPriceRange] = useState([0, 5000]);
@@ -28,21 +30,58 @@ const ProductsFilters = ({
     const [appliedPriceRange, setAppliedPriceRange] = useState([0, 5000]);
     const [appliedCategories, setAppliedCategories] = useState({});
     const [desktopSidebarOpen, setDesktopSidebarOpen] = useState(true);
+    const [isClearing, setIsClearing] = useState(false);
 
     // Initialize categories when they load
     useEffect(() => {
-        if (
-            categories.length > 0 &&
-            Object.keys(selectedCategories).length === 0
-        ) {
-            const initialCategorySelection = { all: true };
-            categories.forEach((category) => {
-                initialCategorySelection[category.id] = false;
-            });
-            setSelectedCategories(initialCategorySelection);
-            setAppliedCategories(initialCategorySelection);
+        if (categories.length > 0) {
+            // Only initialize if selectedCategories is completely empty or doesn't have all the category IDs
+            const hasAllCategoryIds = categories.every((category) =>
+                selectedCategories.hasOwnProperty(category.id)
+            );
+
+            if (
+                Object.keys(selectedCategories).length === 0 ||
+                !hasAllCategoryIds
+            ) {
+                const initialCategorySelection = { all: true };
+                categories.forEach((category) => {
+                    initialCategorySelection[category.id] = false;
+                });
+                setSelectedCategories(initialCategorySelection);
+                setAppliedCategories(initialCategorySelection);
+            }
         }
-    }, [categories, selectedCategories]);
+    }, [categories]);
+
+    // Handle reset trigger from parent component
+    useEffect(() => {
+        if (resetTrigger && categories.length > 0) {
+            const clearedPriceRange = [0, 5000];
+            const clearedCategories = { all: true };
+
+            categories.forEach((category) => {
+                clearedCategories[category.id] = false;
+            });
+
+            setPriceRange(clearedPriceRange);
+            setAppliedPriceRange(clearedPriceRange);
+            setSelectedCategories(clearedCategories);
+            setAppliedCategories(clearedCategories);
+            setHasUnsavedFilters(false);
+            setIsClearing(false); // Reset clearing state
+        }
+    }, [resetTrigger, categories]);
+
+    // Sync with initial filters from parent
+    useEffect(() => {
+        if (initialFilters && categories.length > 0) {
+            setPriceRange(initialFilters.priceRange || [0, 5000]);
+            setAppliedPriceRange(initialFilters.priceRange || [0, 5000]);
+            setSelectedCategories(initialFilters.categories || { all: true });
+            setAppliedCategories(initialFilters.categories || { all: true });
+        }
+    }, [initialFilters, categories]);
 
     // Effect to track unsaved filter changes
     useEffect(() => {
@@ -104,10 +143,21 @@ const ProductsFilters = ({
     };
 
     const handleClearFilters = () => {
+        setIsClearing(true);
+
         const clearedPriceRange = [0, 5000];
         const clearedCategories = { all: true };
+
+        // Ensure all category IDs are set to false, even if categories array is empty
         categories.forEach((category) => {
             clearedCategories[category.id] = false;
+        });
+
+        // Also clear any existing category selections that might not be in the current categories array
+        Object.keys(selectedCategories).forEach((key) => {
+            if (key !== "all") {
+                clearedCategories[key] = false;
+            }
         });
 
         // Clear both UI and applied states
@@ -117,11 +167,19 @@ const ProductsFilters = ({
         setAppliedCategories(clearedCategories);
         setHasUnsavedFilters(false);
 
+        // Close mobile drawer if open
+        if (isMobile) setFilterDrawerOpen(false);
+
         // Send cleared filters to parent
         onFiltersChange({
             priceRange: clearedPriceRange,
             categories: clearedCategories,
         });
+
+        // Reset clearing state after a short delay
+        setTimeout(() => {
+            setIsClearing(false);
+        }, 1000);
     };
 
     const toggleDesktopSidebar = () => {
@@ -294,8 +352,8 @@ const ProductsFilters = ({
                 onClick={handleApplyFilter}
                 disabled={!hasUnsavedFilters}
                 sx={{
-                    backgroundColor: hasUnsavedFilters ? "#000000" : "#ccc",
-                    color: "white",
+                    backgroundColor: hasUnsavedFilters ? "#000000" : "#e0e0e0",
+                    color: hasUnsavedFilters ? "white" : "#999",
                     mb: 2,
                     py: 1.5,
                     fontSize: "14px",
@@ -304,12 +362,16 @@ const ProductsFilters = ({
                     boxShadow: hasUnsavedFilters
                         ? "0 2px 8px rgba(0, 0, 0, 0.3)"
                         : "none",
+                    transition: "all 0.2s ease",
                     "&:hover": {
-                        backgroundColor: hasUnsavedFilters ? "#333333" : "#ccc",
+                        backgroundColor: hasUnsavedFilters
+                            ? "#333333"
+                            : "#e0e0e0",
                     },
                     "&.Mui-disabled": {
-                        backgroundColor: "#ccc",
+                        backgroundColor: "#e0e0e0",
                         color: "#999",
+                        cursor: "not-allowed",
                     },
                 }}
             >
@@ -319,17 +381,36 @@ const ProductsFilters = ({
                 fullWidth
                 variant="text"
                 onClick={handleClearFilters}
+                disabled={isClearing}
+                startIcon={
+                    isClearing ? (
+                        <CircularProgress size={16} sx={{ color: "#4caf50" }} />
+                    ) : null
+                }
                 sx={{
-                    color: "#666",
+                    color: isClearing ? "#4caf50" : "#666",
                     fontSize: "14px",
                     textTransform: "none",
+                    py: 1,
+                    transition: "all 0.2s ease",
+                    fontWeight: isClearing ? 500 : 400,
                     "&:hover": {
-                        backgroundColor: "rgba(33, 150, 243, 0.1)",
-                        color: "#2196f3",
+                        backgroundColor: isClearing
+                            ? "rgba(76, 175, 80, 0.1)"
+                            : "rgba(244, 67, 54, 0.1)",
+                        color: isClearing ? "#4caf50" : "#f44336",
+                        transform: isClearing ? "none" : "translateY(-1px)",
+                    },
+                    "&:active": {
+                        transform: "translateY(0px)",
+                    },
+                    "&.Mui-disabled": {
+                        color: "#4caf50",
+                        backgroundColor: "transparent",
                     },
                 }}
             >
-                Clear all filters
+                {isClearing ? "Clearing..." : "Clear all filters"}
             </Button>
         </>
     );

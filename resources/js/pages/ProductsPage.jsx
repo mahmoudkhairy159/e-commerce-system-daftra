@@ -71,6 +71,7 @@ const ProductsPage = () => {
         priceRange: [0, 5000],
         categories: { all: true },
     });
+    const [filtersResetTrigger, setFiltersResetTrigger] = useState(0);
     // Cart-related states
     const [cartData, setCartData] = useState({
         items: [],
@@ -163,18 +164,27 @@ const ProductsPage = () => {
     };
 
     // Build API parameters for product filtering
-    const buildApiParams = (overrideFilters = null) => {
+    const buildApiParams = (
+        overrideFilters = null,
+        overrideSearch = null,
+        overrideSort = null,
+        overridePage = null
+    ) => {
         // Use provided filters or fall back to state
         const filtersToUse = overrideFilters || appliedFilters;
+        const searchToUse =
+            overrideSearch !== null ? overrideSearch : searchTerm;
+        const sortToUse = overrideSort !== null ? overrideSort : sortBy;
+        const pageToUse = overridePage !== null ? overridePage : currentPage;
 
         const params = {
-            page: currentPage,
+            page: pageToUse,
             per_page: pagination.per_page,
         };
 
         // Add search term
-        if (searchTerm.trim()) {
-            params.search = searchTerm.trim();
+        if (searchToUse && searchToUse.trim()) {
+            params.search = searchToUse.trim();
         }
 
         // Add price range filters
@@ -197,9 +207,9 @@ const ProductsPage = () => {
         }
 
         // Add sorting
-        if (sortBy === "latest") {
+        if (sortToUse === "latest") {
             params.latest = true;
-        } else if (sortBy === "position") {
+        } else if (sortToUse === "position") {
             params.position = true;
         }
 
@@ -281,12 +291,21 @@ const ProductsPage = () => {
 
     // Fetch products from API with request cancellation and retry logic
     const fetchProducts = async (retryCount = 0) => {
-        return await fetchProductsWithFilters(null, retryCount);
+        return await fetchProductsWithFilters(
+            null,
+            null,
+            null,
+            null,
+            retryCount
+        );
     };
 
     // Fetch products with specific filters (avoiding state timing issues)
     const fetchProductsWithFilters = async (
         overrideFilters = null,
+        overrideSearch = null,
+        overrideSort = null,
+        overridePage = null,
         retryCount = 0
     ) => {
         try {
@@ -301,7 +320,12 @@ const ProductsPage = () => {
             // Create new AbortController for this request
             fetchProducts.controller = new AbortController();
 
-            const params = buildApiParams(overrideFilters);
+            const params = buildApiParams(
+                overrideFilters,
+                overrideSearch,
+                overrideSort,
+                overridePage
+            );
             const response = await apiService.getProducts(params);
 
             if (response.data && response.data.success) {
@@ -335,7 +359,13 @@ const ProductsPage = () => {
                 );
 
                 setTimeout(() => {
-                    fetchProductsWithFilters(overrideFilters, retryCount + 1);
+                    fetchProductsWithFilters(
+                        overrideFilters,
+                        overrideSearch,
+                        overrideSort,
+                        overridePage,
+                        retryCount + 1
+                    );
                 }, retryDelay);
                 return;
             } else if (error.response?.status === 429) {
@@ -398,10 +428,8 @@ const ProductsPage = () => {
         setAppliedFilters(filters);
         setCurrentPage(1);
 
-        // Trigger product fetch with new filters immediately
-        setTimeout(() => {
-            fetchProductsWithFilters(filters);
-        }, 50); // Small delay to ensure state is updated
+        // Trigger product fetch with new filters immediately using the provided filters and reset to page 1
+        fetchProductsWithFilters(filters, null, null, 1);
     };
 
     // Handle product card quantity changes (adds/updates cart via API)
@@ -497,15 +525,26 @@ const ProductsPage = () => {
         setCurrentPage(1);
         setSearchApplied(false);
 
-        // Reset filters to initial state
-        setAppliedFilters({
+        // Create cleared filters with all categories set to false
+        const clearedFilters = {
             priceRange: [0, 5000],
             categories: { all: true },
+        };
+
+        // Add all category IDs as false
+        categories.forEach((category) => {
+            clearedFilters.categories[category.id] = false;
         });
 
-        // Trigger product fetch with cleared filters
+        // Reset filters to initial state
+        setAppliedFilters(clearedFilters);
+
+        // Trigger filters reset in ProductsFilters component
+        setFiltersResetTrigger((prev) => prev + 1);
+
+        // Trigger product fetch with cleared filters immediately using the cleared values
         setTimeout(() => {
-            fetchProducts();
+            fetchProductsWithFilters(clearedFilters, "", "latest", 1);
         }, 50);
     };
 
@@ -614,6 +653,8 @@ const ProductsPage = () => {
                     isMobile={isMobile}
                     filterDrawerOpen={filterDrawerOpen}
                     setFilterDrawerOpen={setFilterDrawerOpen}
+                    resetTrigger={filtersResetTrigger}
+                    initialFilters={appliedFilters}
                 />
 
                 {/* Main Content */}

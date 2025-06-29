@@ -150,7 +150,7 @@ class CacheKeysType
             foreach (self::getSupportedLocales() as $locale) {
                 $keys[] = self::getProductsByTypeLocaleCacheKey($productType, $locale);
                 $keys[] = self::getProductsLocaleCacheKey($locale, self::getProductTypeString($productType));
-            }
+        }
         }
 
         // Add category-specific keys if provided
