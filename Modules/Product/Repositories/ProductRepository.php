@@ -315,7 +315,7 @@ class ProductRepository extends BaseRepository
 
     public function findBySlug(string $slug)
     {
-        return $this->model->where('slug', $slug)
+        return $this->model->whereTranslation('slug', $slug)
             ->with([
                 'categories',
                 'productImages',
@@ -345,7 +345,7 @@ class ProductRepository extends BaseRepository
     {
         return $this->model
             ->active()
-            ->where('slug', $slug)
+            ->whereTranslation('slug', $slug)
             ->with([
                 'categories',
                 'productImages',

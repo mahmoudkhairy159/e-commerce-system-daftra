@@ -292,6 +292,7 @@ class ProductController extends Controller
             }
             return $this->successResponse(new ProductResource($data));
         } catch (Exception $e) {
+            dd($e->getMessage());
             return $this->errorResponse(
                 [],
                 __('app.something-went-wrong'),

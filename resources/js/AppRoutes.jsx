@@ -1,17 +1,17 @@
-import React from 'react';
-import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
-import { Box } from '@mui/material';
-import LoginPage from './pages/LoginPage';
-import ProductsPage from './pages/ProductsPage';
-import ProductDetailsPage from './pages/ProductDetailsPage';
-import CartPage from './pages/CartPage';
-import OrderDetailsPage from './pages/OrderDetailsPage';
-import ProtectedRoute from './components/ProtectedRoute';
-import Layout from './components/Layout/Layout';
+import React from "react";
+import { Routes, Route, Navigate, Outlet } from "react-router-dom";
+import { Box } from "@mui/material";
+import LoginPage from "./pages/LoginPage";
+import ProductsPage from "./pages/ProductsPage";
+import ProductDetailsPage from "./pages/ProductDetailsPage";
+import CartPage from "./pages/CartPage";
+import OrderDetailsPage from "./pages/OrderDetailsPage";
+import ProtectedRoute from "./components/ProtectedRoute";
+import Layout from "./components/Layout/Layout";
 
 function AppRoutes() {
     return (
-        <Box sx={{ minHeight: '100vh' }}>
+        <Box sx={{ minHeight: "100vh" }}>
             <Routes>
                 {/* Public Routes */}
                 <Route path="/login" element={<LoginPage />} />
@@ -26,7 +26,7 @@ function AppRoutes() {
                     }
                 />
                 <Route
-                    path="/products/:id"
+                    path="/products/:slug"
                     element={
                         <Layout>
                             <ProductDetailsPage />
@@ -45,7 +45,10 @@ function AppRoutes() {
                         </ProtectedRoute>
                     }
                 >
-                    <Route index element={<Navigate to="/products" replace />} />
+                    <Route
+                        index
+                        element={<Navigate to="/products" replace />}
+                    />
                     <Route path="cart" element={<CartPage />} />
                     <Route path="orders/:id" element={<OrderDetailsPage />} />
                 </Route>

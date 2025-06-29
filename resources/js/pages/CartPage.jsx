@@ -310,7 +310,7 @@ const CartPage = () => {
                                             }}
                                             image={
                                                 cartItem.product?.image_url ||
-                                                "/api/placeholder/120/120"
+                                                "/default.jpg"
                                             }
                                             alt={cartItem.name}
                                         />

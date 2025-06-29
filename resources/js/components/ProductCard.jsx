@@ -25,16 +25,12 @@ const ProductCard = ({
         onQuantityChange(productId, change);
     };
 
-
     return (
         <Grid item xs={12} sm={6} md={4} key={product.id}>
             <Box sx={{ position: "relative", mb: 2 }}>
                 <Box
                     component="img"
-                    src={
-                        product.image_url ||
-                        "https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?w=400&h=400&fit=crop"
-                    }
+                    src={product.image_url || "/default.jpg"}
                     alt={product.name}
                     sx={{
                         width: "100%",

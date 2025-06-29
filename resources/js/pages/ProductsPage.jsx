@@ -92,7 +92,7 @@ const ProductsPage = () => {
                         name: cartProduct.name,
                         image:
                             cartProduct.product.image_url ||
-                            "https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?w=60&h=60&fit=crop",
+                            "/default.jpg",
                         quantity: parseInt(cartProduct.quantity),
                         price: parseFloat(cartProduct.price),
                         chipLabel: cartProduct.product.code,
