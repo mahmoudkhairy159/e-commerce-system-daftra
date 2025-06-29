@@ -56,64 +56,9 @@ trait CacheTrait
      */
     protected function clearAllAreaCaches(): void
     {
-
         $this->invalidateCategoryCache();
     }
 
-    /**
-     * Warm up area caches
-     */
-    protected function warmAreaCaches(): void
-    {
-       
-        $this->getCategoriesCache()->getTree();
-    }
-
-    /**
-     * Get cache statistics for debugging
-     */
-    protected function getCacheStats(): array
-    {
-        $stats = [];
-
-        try {
-            $startTime = microtime(true);
-            $countries = $this->getCountriesCache()->getAll();
-            $stats['countries'] = [
-                'cached' => !empty($countries),
-                'count' => is_array($countries) ? count($countries) : 0,
-                'time_ms' => round((microtime(true) - $startTime) * 1000, 2)
-            ];
-        } catch (\Exception $e) {
-            $stats['countries'] = ['error' => $e->getMessage()];
-        }
-
-        try {
-            $startTime = microtime(true);
-            $states = $this->getStatesCache()->getAll();
-            $stats['states'] = [
-                'cached' => !empty($states),
-                'count' => $states ? $states->count() : 0,
-                'time_ms' => round((microtime(true) - $startTime) * 1000, 2)
-            ];
-        } catch (\Exception $e) {
-            $stats['states'] = ['error' => $e->getMessage()];
-        }
-
-        try {
-            $startTime = microtime(true);
-            $cities = $this->getCitiesCache()->getAll();
-            $stats['cities'] = [
-                'cached' => !empty($cities),
-                'count' => $cities ? $cities->count() : 0,
-                'time_ms' => round((microtime(true) - $startTime) * 1000, 2)
-            ];
-        } catch (\Exception $e) {
-            $stats['cities'] = ['error' => $e->getMessage()];
-        }
-
-        return $stats;
-    }
 
     /**
      * Tags for cache invalidation (if using cache tags)

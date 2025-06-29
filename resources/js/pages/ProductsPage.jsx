@@ -231,7 +231,7 @@ const ProductsPage = () => {
         const fetchCategories = async (retryCount = 0) => {
             try {
                 setCategoriesLoading(true);
-                const response = await apiService.getMainCategories();
+                const response = await apiService.getCategories();
                 if (response.data && response.data.success) {
                     const fetchedCategories = response.data.data || [];
                     setCategories(fetchedCategories);

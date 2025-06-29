@@ -54,68 +54,20 @@ class CacheServiceProvider extends ServiceProvider
                     });
                 }
 
-                public function getFeatured(string $locale = null)
+
+
+
+
+
+
+                public function invalidate()
                 {
-                    $cacheKey = $locale
-                        ? CacheKeysType::getCategoriesLocaleCacheKey($locale, 'featured')
-                        : CacheKeysType::getCategoriesFeaturedCacheKey();
-
-                    return Cache::remember($cacheKey, CacheKeysType::CACHE_TTL_SECONDS, function () {
-                        return app(CategoryRepository::class)->getFeaturedCategories()->get();
-                    });
-                }
-
-                public function getMainCategories(string $locale = null)
-                {
-                    $cacheKey = $locale
-                        ? CacheKeysType::getCategoriesLocaleCacheKey($locale, 'main')
-                        : CacheKeysType::getCategoriesMainCacheKey();
-
-                    return Cache::remember($cacheKey, CacheKeysType::CACHE_TTL_SECONDS, function () {
-                        return app(CategoryRepository::class)->getActiveMainCategories()->get();
-                    });
-                }
-
-                public function getTree(string $locale = null)
-                {
-                    $cacheKey = $locale
-                        ? CacheKeysType::getCategoriesLocaleCacheKey($locale, 'tree')
-                        : CacheKeysType::getCategoriesTreeCacheKey();
-
-                    return Cache::remember($cacheKey, CacheKeysType::CACHE_TTL_SECONDS, function () {
-                        return app(CategoryRepository::class)->getActiveTreeStructure();
-                    });
-                }
-
-                public function getByParent(int $parentId, string $locale = null)
-                {
-                    $cacheKey = $locale
-                        ? CacheKeysType::getCategoriesByParentLocaleCacheKey($parentId, $locale)
-                        : CacheKeysType::getCategoriesByParentCacheKey($parentId);
-
-                    return Cache::remember($cacheKey, CacheKeysType::CACHE_TTL_SECONDS, function () use ($parentId) {
-                        return app(CategoryRepository::class)->getActiveByParentId($parentId)->get();
-                    });
-                }
-
-                public function invalidate(int $parentId = null)
-                {
-                    $keys = CacheKeysType::getCategoryRelatedCacheKeys($parentId);
+                    $keys = CacheKeysType::getCategoryRelatedCacheKeys();
                     foreach ($keys as $key) {
                         Cache::forget($key);
                     }
                 }
 
-                public function invalidateAll()
-                {
-                    $this->invalidate();
-
-                    // Also invalidate any parent-specific caches we might have
-                    $categories = app(CategoryRepository::class)->getAll()->pluck('parent_id')->filter()->unique();
-                    foreach ($categories as $parentId) {
-                        $this->invalidate($parentId);
-                    }
-                }
             };
         });
 
@@ -231,20 +183,10 @@ class CacheServiceProvider extends ServiceProvider
             };
         });
 
-        // Legacy cache key bindings for backward compatibility
-        $this->registerLegacyCacheBindings();
+
     }
 
-    /**
-     * Register legacy cache bindings for backward compatibility
-     */
-    private function registerLegacyCacheBindings()
-    {
 
-        $this->app->singleton(CacheKeysType::CATEGORIES_TREE_CACHE, function () {
-            return app('cache.categories')->getTree();
-        });
-    }
 
     /**
      * Bootstrap any application services.
@@ -264,8 +206,7 @@ class CacheServiceProvider extends ServiceProvider
 
 
         // Warm categories cache
-        $categoriesCache = app('cache.categories');
-        $categoriesCache->getTree();
+        app('cache.categories')->getAllActive();
     }
 
 

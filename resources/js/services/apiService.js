@@ -190,12 +190,10 @@ class ApiService {
     async getCategories() {
         return this.get('/categories');
     }
-     async getMainCategories() {
-        return this.get('/categories/parents');
-    }
+   
 
 
-  
+
 }
 
 const apiService = new ApiService();

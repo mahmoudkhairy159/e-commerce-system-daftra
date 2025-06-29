@@ -59,45 +59,6 @@ class CategoryController extends Controller
             return $this->errorResponse([], __('app.something-went-wrong'), 500);
         }
     }
-    /**
-     * Get child categories by parent ID.
-     */
-    public function getByParentId($parentId)
-    {
-        try {
-            // Fetch child categories where parent_id matches the provided parentId
-            $data = $this->categoryRepository->getByParentId($parentId)->get();
-
-            // Return success response with the fetched categories
-            return $this->successResponse(CategoryResource::collection($data));
-        } catch (Exception $e) {
-            return $this->errorResponse([], __('app.something-went-wrong'), 500);
-        }
-    }
-    /**
-     * Get the hierarchical structure of categories.
-     */
-    public function getMainCategories()
-    {
-        try {
-            // Retrieve all categories, and organize them in a tree structure
-            $data = $this->categoryRepository->getMainCategories()->get();
-            return $this->successResponse(CategoryResource::collection($data));
-        } catch (Exception $e) {
-            return $this->errorResponse([], __('app.something-went-wrong'), 500);
-        }
-    }
-    public function getTreeStructure()
-    {
-        try {
-            // Retrieve all categories, and organize them in a tree structure
-            $data = $this->categoryRepository->getTreeStructure();
-            return $this->successResponse(CategoryResource::collection($data));
-        } catch (Exception $e) {
-            return $this->errorResponse([], __('app.something-went-wrong'), 500);
-        }
-    }
-
 
     /**
      * Store a newly created resource in storage.
@@ -295,6 +256,6 @@ class CategoryController extends Controller
     }
     private function clearCategoriesCache()
     {
-        $this->deleteCache(CacheKeysType::CATEGORIES_TREE_CACHE);
+        $this->deleteCache(CacheKeysType::CATEGORIES_CACHE);
     }
 }

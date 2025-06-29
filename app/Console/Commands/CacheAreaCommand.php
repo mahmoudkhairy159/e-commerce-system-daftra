@@ -76,11 +76,8 @@ class CacheAreaCommand extends Command
             // Warm all category cache types
             $allCategories = $categoriesCache->getAll();
             $activeCategories = $categoriesCache->getAllActive();
-            $featuredCategories = $categoriesCache->getFeatured();
-            $mainCategories = $categoriesCache->getMainCategories();
-            $treeCategories = $categoriesCache->getTree();
 
-            $this->info('✓ Categories cache warmed (All: ' . count($allCategories) . ', Active: ' . count($activeCategories) . ', Featured: ' . count($featuredCategories) . ', Main: ' . count($mainCategories) . ', Tree: ' . count($treeCategories) . ')');
+            $this->info('✓ Categories cache warmed (All: ' . count($allCategories) . ', Active: ' . count($activeCategories) . ')');
 
             // Warm products cache
             $this->line('Warming products cache...');
@@ -89,12 +86,11 @@ class CacheAreaCommand extends Command
             // Warm all product cache types
             $allProducts = $productsCache->getAll();
             $activeProducts = $productsCache->getAllActive();
-            $featuredProducts = $productsCache->getFeatured();
             $newArrivals = $productsCache->getNewArrivals();
             $bestSellers = $productsCache->getBestSellers();
             $topProducts = $productsCache->getTopProducts();
 
-            $this->info('✓ Products cache warmed (All: ' . count($allProducts) . ', Active: ' . count($activeProducts) . ', Featured: ' . count($featuredProducts) . ', New Arrivals: ' . count($newArrivals) . ', Best Sellers: ' . count($bestSellers) . ', Top: ' . count($topProducts) . ')');
+            $this->info('✓ Products cache warmed (All: ' . count($allProducts) . ', Active: ' . count($activeProducts) . ', New Arrivals: ' . count($newArrivals) . ', Best Sellers: ' . count($bestSellers) . ', Top: ' . count($topProducts) . ')');
 
             $endTime = microtime(true);
             $executionTime = round(($endTime - $startTime) * 1000, 2);

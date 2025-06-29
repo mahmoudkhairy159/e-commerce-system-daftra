@@ -38,7 +38,6 @@ class Category extends Model implements TranslatableContract
         'updated_by',
         'status',
         'position',
-        'parent_id',
     ];
 
     /**
@@ -117,17 +116,7 @@ class Category extends Model implements TranslatableContract
 
 
 
-    // Parent relationship
-    public function parent()
-    {
-        return $this->belongsTo(Category::class, 'parent_id');
-    }
 
-    // Children relationship
-    public function children()
-    {
-        return $this->hasMany(Category::class, 'parent_id');
-    }
 
 
     /*************************************End Relationships *********************************************/

@@ -53,95 +53,12 @@ class CategoryController extends Controller
         }
     }
 
-    public function getFeaturedCategories()
-    {
-        try {
-            $currentLocale = core()->getCurrentLocale();
-            $data = $this->categoryRepository->getCachedFeaturedCategories($currentLocale);
 
-            if (!$data || $data->isEmpty()) {
-                return $this->messageResponse(
-                    __("app.data_not_found"),
-                    false,
-                    404
-                );
-            }
 
-            return $this->successResponse(CategoryResource::collection($data));
-        } catch (Exception $e) {
-            return $this->errorResponse(
-                [$e->getMessage()],
-                __('app.something-went-wrong'),
-                500
-            );
-        }
-    }
 
-    /**
-     * Get child categories by parent ID.
-     */
-    public function getByParentId($parentId)
-    {
-        try {
-            $currentLocale = core()->getCurrentLocale();
-            $data = $this->categoryRepository->getCachedByParentId($parentId, $currentLocale);
 
-            if (!$data || $data->isEmpty()) {
-                return $this->messageResponse(
-                    __("app.data_not_found"),
-                    false,
-                    404
-                );
-            }
 
-            return $this->successResponse(CategoryResource::collection($data));
-        } catch (Exception $e) {
-            return $this->errorResponse([], __('app.something-went-wrong'), 500);
-        }
-    }
 
-    /**
-     * Get the hierarchical structure of categories.
-     */
-    public function getMainCategories()
-    {
-        try {
-            $currentLocale = core()->getCurrentLocale();
-            $data = $this->categoryRepository->getCachedMainCategories($currentLocale);
-
-            if (!$data || $data->isEmpty()) {
-                return $this->messageResponse(
-                    __("app.data_not_found"),
-                    false,
-                    404
-                );
-            }
-
-            return $this->successResponse(CategoryResource::collection($data));
-        } catch (Exception $e) {
-            return $this->errorResponse([], __('app.something-went-wrong'), 500);
-        }
-    }
-
-    public function getTreeStructure()
-    {
-        try {
-            $currentLocale = core()->getCurrentLocale();
-            $data = $this->categoryRepository->getCachedTreeStructure($currentLocale);
-
-            if (!$data || $data->isEmpty()) {
-                return $this->messageResponse(
-                    __("app.data_not_found"),
-                    false,
-                    404
-                );
-            }
-
-            return $this->successResponse(CategoryResource::collection($data));
-        } catch (Exception $e) {
-            return $this->errorResponse([], __('app.something-went-wrong'), 500);
-        }
-    }
 
     /**
      * Show the specified resource.

@@ -20,9 +20,8 @@ class CategoryResource extends JsonResource
             "image_url" => $this->image_url,
             'status' => $this->status,
             'position' => $this->position,
-            'parent_id' => $this->parent_id,
-            'children' => CategoryResource::collection($this->whenLoaded('children')),
          
+
         ];
     }
 }

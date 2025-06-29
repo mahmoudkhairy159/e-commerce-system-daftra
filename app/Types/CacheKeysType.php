@@ -12,12 +12,8 @@ class CacheKeysType
 
     // Categories cache keys
     const CATEGORIES_CACHE = "CATEGORIES_CACHE";
-    const CATEGORIES_TREE_CACHE = "CATEGORIES_TREE_CACHE";
     const CATEGORIES_CACHE_PREFIX = "CATEGORIES_CACHE_";
     const CATEGORIES_ACTIVE_CACHE = "CATEGORIES_ACTIVE_CACHE";
-    const CATEGORIES_FEATURED_CACHE = "CATEGORIES_FEATURED_CACHE";
-    const CATEGORIES_MAIN_CACHE = "CATEGORIES_MAIN_CACHE";
-    const CATEGORIES_BY_PARENT_CACHE_PREFIX = "CATEGORIES_BY_PARENT_";
 
     // Products cache keys
     const PRODUCTS_CACHE = "PRODUCTS_CACHE";
@@ -59,45 +55,6 @@ class CacheKeysType
         return self::CATEGORIES_ACTIVE_CACHE;
     }
 
-    /**
-     * Get categories cache key for featured categories
-     */
-    public static function getCategoriesFeaturedCacheKey(): string
-    {
-        return self::CATEGORIES_FEATURED_CACHE;
-    }
-
-    /**
-     * Get categories cache key for main categories
-     */
-    public static function getCategoriesMainCacheKey(): string
-    {
-        return self::CATEGORIES_MAIN_CACHE;
-    }
-
-    /**
-     * Get categories cache key for tree structure
-     */
-    public static function getCategoriesTreeCacheKey(): string
-    {
-        return self::CATEGORIES_TREE_CACHE;
-    }
-
-    /**
-     * Get categories cache key by parent ID
-     */
-    public static function getCategoriesByParentCacheKey(int $parentId): string
-    {
-        return self::CATEGORIES_BY_PARENT_CACHE_PREFIX . $parentId;
-    }
-
-    /**
-     * Get categories cache key by parent ID and locale
-     */
-    public static function getCategoriesByParentLocaleCacheKey(int $parentId, string $locale): string
-    {
-        return self::CATEGORIES_BY_PARENT_CACHE_PREFIX . $parentId . '_' . strtoupper($locale);
-    }
 
     /**
      * Get categories cache key for specific locale
@@ -110,31 +67,20 @@ class CacheKeysType
     /**
      * Get all cache keys that should be invalidated when categories change
      */
-    public static function getCategoryRelatedCacheKeys(int $parentId = null): array
+    public static function getCategoryRelatedCacheKeys(): array
     {
         $keys = [
             self::getCategoriesCacheKey(),
             self::getCategoriesActiveCacheKey(),
-            self::getCategoriesFeaturedCacheKey(),
-            self::getCategoriesMainCacheKey(),
-            self::getCategoriesTreeCacheKey()
         ];
 
         $locales = self::getSupportedLocales();
         foreach ($locales as $locale) {
             $keys[] = self::getCategoriesLocaleCacheKey($locale, 'active');
             $keys[] = self::getCategoriesLocaleCacheKey($locale, 'all');
-            $keys[] = self::getCategoriesLocaleCacheKey($locale, 'featured');
-            $keys[] = self::getCategoriesLocaleCacheKey($locale, 'main');
-            $keys[] = self::getCategoriesLocaleCacheKey($locale, 'tree');
+
         }
 
-        if ($parentId) {
-            $keys[] = self::getCategoriesByParentCacheKey($parentId);
-            foreach ($locales as $locale) {
-                $keys[] = self::getCategoriesByParentLocaleCacheKey($parentId, $locale);
-            }
-        }
 
         return $keys;
     }
@@ -268,7 +214,7 @@ class CacheKeysType
         return $keys;
     }
 
-   
+
 
 
 }

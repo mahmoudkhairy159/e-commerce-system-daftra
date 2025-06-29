@@ -313,18 +313,6 @@ class ProductRepository extends BaseRepository
 
     /*****************************************End Cached Methods **************************************/
 
-    public function getFavoriteCustomersCountByProductId($id)
-    {
-        // return [
-        //     'no_of_customers' => Wishlist::where('user_id', auth()->id())
-        //         ->whereHas('items', function ($query) use ($id) {
-        //             $query->where('product_id', $id);
-        //         })
-        //         ->count(),
-        // ];
-        return null;
-    }
-
     public function findBySlug(string $slug)
     {
         return $this->model->where('slug', $slug)

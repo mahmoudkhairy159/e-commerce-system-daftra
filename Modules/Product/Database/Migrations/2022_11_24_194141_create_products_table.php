@@ -32,7 +32,7 @@ return new class extends Migration {
             $table->string("currency", 10)->default('LE'); // Add length limit
             $table->unsignedInteger("stock")->default(1);
             $table->double("price", 10, 2);
-            $table->double("offer_price", 10, 2)->nullable()->default(0);
+            $table->double("offer_price", 10, 2)->default(0);
             $table->tinyInteger('tax_rate')->default(0);
             $table->date('offer_start_date')->nullable();
             $table->date('offer_end_date')->nullable();

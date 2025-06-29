@@ -23,9 +23,8 @@ class StoreCategoryRequest extends FormRequest
         $rules['code'] = ['required', 'unique:categories,code'];
         $rules['image'] = ['nullable','image','mimes:jpeg,png,jpg,gif', 'max:5000'];
         $rules['position'] = ['required', 'integer', 'min:1'];
-        $rules['parent_id'] = ['nullable', 'integer', 'exists:categories,id'];
         $rules['status'] = ['required','in:0,1'];
-         
+
         return $rules;
     }
 

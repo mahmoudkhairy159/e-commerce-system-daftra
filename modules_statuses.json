@@ -1,11 +1,9 @@
 {
     "Admin": true,
-    "Area": true,
     "Category": true,
     "User": true,
     "Product": true,
     "Cart": true,
-    "Wishlist": true,
     "Shipping": true,
     "Order": true
 }

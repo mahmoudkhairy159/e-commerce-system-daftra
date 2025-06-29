@@ -128,10 +128,7 @@ class Product extends Model implements TranslatableContract
         return Auth::guard('user-api')->user() && Auth::guard('user-api')->user()->cart ? $this->cartProducts()->where("cart_id", Auth::guard('user-api')->user()->cart->id)->exists() : false;
     }
 
-    public function getIsWishListedAttribute()
-    {
-        return Auth::guard('user-api')->user() && Auth::guard('user-api')->user()->wishlist ? $this->wishlistProducts()->where("wishlist_id", Auth::guard('user-api')->user()->wishlist->id)->exists() : false;
-    }
+      
 
     /**
      * Get the admin who created the product.

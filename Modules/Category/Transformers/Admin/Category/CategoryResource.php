@@ -22,19 +22,6 @@ class CategoryResource extends JsonResource
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
             'position' => $this->position,
-            'parent_id' => $this->parent_id,
-            // 'parent' => $this->parent ? [
-            //     'id' => $this->parent->id,
-            //     'name' => $this->parent->name,
-            //     'slug' => $this->parent->slug,
-            //     'description' => $this->parent->description,
-            //     'code' => $this->parent->code,
-            //     "image_url" => $this->parent->image_url,
-            //     'status' => $this->parent->status,
-            //     'position' => $this->parent->position,
-
-            // ] : null,
-            'children' => CategoryResource::collection($this->whenLoaded('children')),
             'translations' => $this->whenLoaded('translations', $this->getTranslationsArray()),
 
         ];
