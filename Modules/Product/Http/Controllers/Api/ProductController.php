@@ -42,19 +42,25 @@ class ProductController extends Controller
     public function index()
     {
         try {
+            request('per_page', 6);
             $locale = $this->getCurrentLocale();
 
             // Use cached active products with pagination
             $products = $this->productRepository->getCachedActiveProducts($locale);
 
-            if ($products->isEmpty()) {
+            // Check if products are empty (for both paginated and collection results)
+            $isEmpty = method_exists($products, 'isEmpty') ?
+                $products->isEmpty() :
+                (method_exists($products, 'count') ? $products->count() === 0 : empty($products));
+
+            if ($isEmpty) {
                 return $this->successResponse(
                     [],
                     __('app.no-data-found')
                 );
             }
 
-            // Convert collection to paginator if needed
+            // Convert collection to paginator if needed (for cached results)
             if (!method_exists($products, 'total')) {
                 $page = request()->get('page', 1);
                 $perPage = request()->get('per_page', 15);

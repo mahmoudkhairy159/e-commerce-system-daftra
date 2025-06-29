@@ -19,7 +19,7 @@ class ShippingMethodSeederTableSeeder extends Seeder
         $shippingMethods = [
             [
                 'type' => ShippingMethodType::HYBRID,
-                'flat_rate' => 10.00,
+                'flat_rate' => 15.00,
                 'per_km_rate' => 1.50,
                 'max_distance' => 100,
                 'status' => 1,
@@ -36,7 +36,7 @@ class ShippingMethodSeederTableSeeder extends Seeder
             ],
             [
                 'type' => ShippingMethodType::HYBRID,
-                'flat_rate' => 20.00,
+                'flat_rate' => 15.00,
                 'per_km_rate' => 2.50,
                 'max_distance' => 50,
                 'status' => 1,

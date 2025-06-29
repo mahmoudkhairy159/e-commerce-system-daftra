@@ -13,6 +13,7 @@ class CategorySeeder extends Seeder
     public function run(): void
     {
         $mainCategories = [
+            
             [
                 'code' => 'C1',
                 'name_en' => 'Electronics',

@@ -123,7 +123,7 @@ class ProductFilter extends ModelFilter
         return $this->where('offer_price', '<=', $toPrice);
     }
 
-   
+
 
 
 

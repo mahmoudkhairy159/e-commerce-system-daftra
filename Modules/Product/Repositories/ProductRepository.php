@@ -215,12 +215,14 @@ class ProductRepository extends BaseRepository
      */
     private function getAllActiveFiltered()
     {
+        $perPage = request()->get('per_page', 15);
+
         return $this->model
             ->active()
             ->with(['categories', 'productImages'])
             ->filter(request()->all())
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->paginate($perPage);
     }
 
     /**

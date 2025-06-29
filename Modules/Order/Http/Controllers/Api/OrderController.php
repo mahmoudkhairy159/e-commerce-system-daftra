@@ -10,7 +10,6 @@ use Illuminate\Support\Facades\Log;
 use Modules\Cart\Repositories\CartRepository;
 use Modules\Order\Enums\OrderPaymentMethodEnum;
 use Modules\Order\Enums\OrderPaymentStatusEnum;
-use Modules\Order\Http\Requests\Api\Order\StoreCashOrderRequest;
 use Modules\Order\Http\Requests\Api\Order\StoreOrderWithValidationRequest;
 use Modules\Order\Repositories\OrderRepository;
 use Modules\Order\Services\OrderCalculationService;
