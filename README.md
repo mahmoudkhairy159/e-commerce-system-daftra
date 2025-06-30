@@ -358,6 +358,11 @@ npm run build
 chmod -R 755 storage
 chmod -R 755 bootstrap/cache
 ```
+# LOGIN By Default User
+```
+email: mahmoudkhairy159@gmail.com
+password: 12345678
+```
 
 
 
